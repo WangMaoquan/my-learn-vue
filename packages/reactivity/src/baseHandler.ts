@@ -1,4 +1,5 @@
 import { hasChanged, hasOwn, isArray, isIntegerKey } from '../../shared';
+import { warn } from '../../shared/warning';
 import { track, trigger } from './effect';
 
 /**
@@ -54,7 +55,31 @@ const createSetter = (isShallow = false) => {
 const get = createGetter();
 const set = createSetter();
 
+const readonlyGet = createGetter(true);
+
 export const mutableHandlers: ProxyHandler<object> = {
   get,
   set,
+}
+
+export const readonlyHandlers: ProxyHandler<object> = {
+  get: readonlyGet,
+  set(target, key) {
+    if (__DEV__) {
+      warn(
+        `Set operation on key "${String(key)}" failed: target is readonly.`,
+        target
+      )
+    }
+    return true
+  },
+  deleteProperty(target, key) {
+    if (__DEV__) {
+      warn(
+        `Delete operation on key "${String(key)}" failed: target is readonly.`,
+        target
+      )
+    }
+    return true
+  }
 }

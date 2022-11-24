@@ -102,10 +102,12 @@ export const track = (target: object, key: unknown) => {
     dep = new Set();
     depsMap.set(key, dep);
   }
+  if (!activeEffect) {
+    return
+  }
   dep.add(activeEffect!);
-
   // 将effect 对应的依赖 存到 effect 的 deps上
-  activeEffect?.deps.push(dep);
+  activeEffect.deps.push(dep);
 };
 
 /**
