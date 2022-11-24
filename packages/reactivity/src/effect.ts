@@ -8,14 +8,17 @@ export class ReactiveEffect<T = any> {
   }
   run() {
     activeEffect = this;
-    this.fn();
+    return this.fn();
   }
 }
 
 export const effect = <T = any>(fn: () => T) => {
   // todo 如果进来的已经是一个 ReactiveEffect 是不需要执行 new ReactiveEffect 的
   const _effect = new ReactiveEffect(fn);
+
   _effect.run();
+  const runner = _effect.run.bind(_effect);
+  return runner;
 };
 
 export const track = (target: object, key: unknown) => {
