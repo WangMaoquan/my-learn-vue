@@ -17,4 +17,17 @@ describe('reactive', () => {
     expect(isReactive(original)).toBe(false);
     expect(isReactive(observed)).toBe(true);
   })
+
+  it('nest reactive', () => {
+    const original = {
+      person: {
+        age: 21,
+        name: 'decade'
+      },
+      like: ["music"]
+    }
+    const observed = reactive(original);
+    expect(isReactive(observed.person)).toBe(true);
+    expect(isReactive(original.like)).not.toBe(true);
+  })
 })
