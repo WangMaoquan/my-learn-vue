@@ -1,5 +1,5 @@
 import { isObject } from '../../shared';
-import { mutableHandlers, readonlyHandlers } from './baseHandler';
+import { mutableHandlers, readonlyHandlers, shallowReactiveHandlers, shallowReadonlyHandlers } from './baseHandler';
 
 export const reactiveMap = new WeakMap<Target, any>()
 export const shallowReactiveMap = new WeakMap<Target, any>()
@@ -94,6 +94,16 @@ export function readonly(target: object) {
   return createReactiveObject(target, true, readonlyHandlers, readonlyMap);
 }
 
+export function shallowReactive<T extends object>(target: T): T;
+export function shallowReactive(target: object) {
+  return createReactiveObject(target, false, shallowReactiveHandlers, shallowReactiveMap)
+}
+
+export function shallowReadonly<T extends object>(target: T): Readonly<T>
+export function shallowReadonly(target: object) {
+  return createReactiveObject(target, true, shallowReadonlyHandlers, shallowReadonlyMap)
+}
+
 export const isReactive: (value: unknown) => boolean = (value) => {
   if (isReadonly(value)) {
     return isReactive((value as Target)[ReactiveFlags.RAW])
@@ -103,4 +113,12 @@ export const isReactive: (value: unknown) => boolean = (value) => {
 
 export const isReadonly = (value: unknown) => {
   return !!(value && (value as Target)["__v_isReadonly"])
+}
+
+export function isShallow(value: unknown): boolean {
+  return !!(value && (value as Target)[ReactiveFlags.IS_SHALLOW])
+}
+
+export function isProxy(value: unknown): boolean {
+  return isReactive(value) || isReadonly(value)
 }

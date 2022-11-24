@@ -1,8 +1,17 @@
-import { isObject } from './../../shared/index';
+import { extend, isObject } from './../../shared/index';
 import { hasChanged, hasOwn, isArray, isIntegerKey } from '../../shared';
 import { warn } from '../../shared/warning';
 import { track, trigger } from './effect';
-import { ReactiveFlags, reactiveMap, readonlyMap, shallowReactiveMap, shallowReadonlyMap, isReactive, readonly, reactive } from './reactive';
+import {
+  ReactiveFlags,
+  reactiveMap,
+  readonlyMap,
+  shallowReactiveMap,
+  shallowReadonlyMap,
+  isReactive,
+  readonly,
+  reactive,
+} from './reactive';
 
 /**
  * 创建 proxy get 的工厂函数
@@ -12,11 +21,11 @@ import { ReactiveFlags, reactiveMap, readonlyMap, shallowReactiveMap, shallowRea
 const createGetter = (isReadonly = false, shallow = false) => {
   return function get(target: object, key: string | symbol, receiver: object) {
     if (key === ReactiveFlags.IS_REACTIVE) {
-      return !isReadonly
+      return !isReadonly;
     } else if (key === ReactiveFlags.IS_READONLY) {
-      return isReadonly
+      return isReadonly;
     } else if (key === ReactiveFlags.IS_SHALLOW) {
-      return shallow
+      return shallow;
     } else if (
       key === ReactiveFlags.RAW &&
       receiver ===
@@ -29,7 +38,7 @@ const createGetter = (isReadonly = false, shallow = false) => {
           : reactiveMap
         ).get(target)
     ) {
-      return target
+      return target;
     }
     // todo 针对数组 非readonly 数组的处理
     const res = Reflect.get(target, key, receiver);
@@ -40,7 +49,7 @@ const createGetter = (isReadonly = false, shallow = false) => {
     }
 
     if (shallow) {
-      return res
+      return res;
     }
 
     // todo针对传入进来target 是 ref
@@ -73,9 +82,9 @@ const createSetter = (isShallow = false) => {
     const result = Reflect.set(target, key, value, receiver);
 
     if (!hadKey) {
-      trigger(target, key, value)
+      trigger(target, key, value);
     } else if (hasChanged(value, oldValue)) {
-      trigger(target, key, value, oldValue)
+      trigger(target, key, value, oldValue);
     }
 
     return result;
@@ -96,12 +105,12 @@ const shallowGet = createGetter(false, true);
 const shallowSet = createSetter(true);
 
 // shallowReadonly
-const shallowReadonlyGet = createGetter(false, true)
+const shallowReadonlyGet = createGetter(false, true);
 
 export const mutableHandlers: ProxyHandler<object> = {
   get,
   set,
-}
+};
 
 export const readonlyHandlers: ProxyHandler<object> = {
   get: readonlyGet,
@@ -109,18 +118,35 @@ export const readonlyHandlers: ProxyHandler<object> = {
     if (__DEV__) {
       warn(
         `Set operation on key "${String(key)}" failed: target is readonly.`,
-        target
-      )
+        target,
+      );
     }
-    return true
+    return true;
   },
   deleteProperty(target, key) {
     if (__DEV__) {
       warn(
         `Delete operation on key "${String(key)}" failed: target is readonly.`,
-        target
-      )
+        target,
+      );
     }
-    return true
-  }
-}
+    return true;
+  },
+};
+
+export const shallowReactiveHandlers: ProxyHandler<object> = extend(
+  {},
+  mutableHandlers,
+  {
+    get: shallowGet,
+    set: shallowSet,
+  },
+);
+
+export const shallowReadonlyHandlers: ProxyHandler<object> = extend(
+  {},
+  readonlyHandlers,
+  {
+    get: shallowReadonlyGet,
+  },
+);
