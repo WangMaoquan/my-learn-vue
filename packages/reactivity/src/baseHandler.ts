@@ -1,23 +1,55 @@
+import { isObject } from './../../shared/index';
 import { hasChanged, hasOwn, isArray, isIntegerKey } from '../../shared';
 import { warn } from '../../shared/warning';
 import { track, trigger } from './effect';
+import { ReactiveFlags, reactiveMap, readonlyMap, shallowReactiveMap, shallowReadonlyMap, isReactive, readonly, reactive } from './reactive';
 
 /**
  * 创建 proxy get 的工厂函数
  * @param isReadonly 是否只读
- * @param isShallow 是否浅 只包一层
+ * @param shallow 是否浅 只包一层
  */
-const createGetter = (isReadonly = false, isShallow = false) => {
+const createGetter = (isReadonly = false, shallow = false) => {
   return function get(target: object, key: string | symbol, receiver: object) {
-    // todo vue3 reactiveObject 定义的属性未处理
+    if (key === ReactiveFlags.IS_REACTIVE) {
+      return !isReadonly
+    } else if (key === ReactiveFlags.IS_READONLY) {
+      return isReadonly
+    } else if (key === ReactiveFlags.IS_SHALLOW) {
+      return shallow
+    } else if (
+      key === ReactiveFlags.RAW &&
+      receiver ===
+        (isReadonly
+          ? shallow
+            ? shallowReadonlyMap
+            : readonlyMap
+          : shallow
+          ? shallowReactiveMap
+          : reactiveMap
+        ).get(target)
+    ) {
+      return target
+    }
     // todo 针对数组 非readonly 数组的处理
     const res = Reflect.get(target, key, receiver);
 
+    // 只要不是只读 就会收集依赖
     if (!isReadonly) {
       track(target, key);
     }
 
-    // todo针对传入进来target 是 ref 或者已经是reactiveoject 情况下的处理
+    if (shallow) {
+      return res
+    }
+
+    // todo针对传入进来target 是 ref
+
+    // 这里就是处理用到的时候才会去代理
+    // 不像vue2初始化时 会递归defineProperty
+    if (isObject(res)) {
+      return isReadonly ? readonly(res) : reactive(res);
+    }
 
     return res;
   };
@@ -52,10 +84,19 @@ const createSetter = (isShallow = false) => {
 
 // todo has / deleteProperty / ownKeys
 
+// base
 const get = createGetter();
 const set = createSetter();
 
+// readonly
 const readonlyGet = createGetter(true);
+
+// shallowReactive
+const shallowGet = createGetter(false, true);
+const shallowSet = createSetter(true);
+
+// shallowReadonly
+const shallowReadonlyGet = createGetter(false, true)
 
 export const mutableHandlers: ProxyHandler<object> = {
   get,

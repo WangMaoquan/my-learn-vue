@@ -3,6 +3,7 @@ import { extend } from '../../shared';
 type KeyToDepMap = Map<any, Set<ReactiveEffect<any>>>;
 const targetMap = new WeakMap<any, KeyToDepMap>();
 export let activeEffect: ReactiveEffect | undefined;
+export let shouldTrack = true
 
 export type EffectScheduler = (...args: any[]) => any;
 
@@ -30,8 +31,13 @@ export class ReactiveEffect<T = any> {
     if (!this.active) {
       return this.fn();
     }
-    activeEffect = this;
-    return this.fn();
+    try {
+      activeEffect = this;
+      shouldTrack = true;
+      return this.fn();
+    } finally {
+      shouldTrack = false;
+    }
   }
   stop() {
     // 清除依赖 
@@ -90,24 +96,32 @@ export function stop(runner: ReactiveEffectRunner) {
   runner.effect.stop()
 }
 
+/**
+ * 1. 首先判断是否存在对应 depsMap, 没有就初始化
+ * 2. 然后通过key 去知道对应的dep, 没有就初始化
+ * 3. 将activeEffect add 进dep 中
+ * 4. 存入activeEffect 的deps 中 方便effect 执行stop 方法清空依赖
+ * @param target 收集的对象
+ * @param key 收集对象的key
+ * @returns 
+ */
 export const track = (target: object, key: unknown) => {
-  let depsMap = targetMap.get(target);
-  // target => key => dep
-  if (!depsMap) {
-    depsMap = new Map();
-    targetMap.set(target, depsMap);
+  if (activeEffect && shouldTrack) {
+    let depsMap = targetMap.get(target);
+    // target => key => dep
+    if (!depsMap) {
+      depsMap = new Map();
+      targetMap.set(target, depsMap);
+    }
+    let dep = depsMap.get(key);
+    if (!dep) {
+      dep = new Set();
+      depsMap.set(key, dep);
+    }
+    dep.add(activeEffect!);
+    // 将effect 对应的依赖 存到 effect 的 deps上
+    activeEffect.deps.push(dep);
   }
-  let dep = depsMap.get(key);
-  if (!dep) {
-    dep = new Set();
-    depsMap.set(key, dep);
-  }
-  if (!activeEffect) {
-    return
-  }
-  dep.add(activeEffect!);
-  // 将effect 对应的依赖 存到 effect 的 deps上
-  activeEffect.deps.push(dep);
 };
 
 /**

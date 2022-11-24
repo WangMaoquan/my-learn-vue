@@ -76,9 +76,11 @@ describe('effect', () => {
     obj.prop = 2
     expect(dummy).toBe(2)
     stop(runner)
-    obj.prop = 3
+    // obj.prop = 3
+    // 执行obj.props++ 会先触发get 收集依赖可以理解为执行了runner, 
+    // 但是已经stop得情况下 不应该再被收集
+    obj.prop++;
     expect(dummy).toBe(2)
-
     // stopped effect should still be manually callable
     runner()
     expect(dummy).toBe(3)

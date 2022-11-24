@@ -1,12 +1,39 @@
 import { isObject } from '../../shared';
 import { mutableHandlers, readonlyHandlers } from './baseHandler';
 
-export const reactiveMap = new WeakMap<object, any>();
-export const readonlyMap = new WeakMap<object, any>();
+export const reactiveMap = new WeakMap<Target, any>()
+export const shallowReactiveMap = new WeakMap<Target, any>()
+export const readonlyMap = new WeakMap<Target, any>()
+export const shallowReadonlyMap = new WeakMap<Target, any>()
+
+export const enum ReactiveFlags {
+  IS_REACTIVE = '__v_isReactive', // 约定的是响应式对象的key
+  IS_READONLY = '__v_isReadonly', // 约定的是 只读对象的key
+  IS_SHALLOW = '__v_isShallow', // 约定的浅包一层的key
+  RAW = '__v_raw' // 约定的 返回proxy 最开始代理的那个 object 的key
+}
+
+export interface Target {
+  [ReactiveFlags.IS_REACTIVE]?: boolean
+  [ReactiveFlags.IS_READONLY]?: boolean
+  [ReactiveFlags.IS_SHALLOW]?: boolean
+  [ReactiveFlags.RAW]?: any
+}
 
 // todo Map Set 的 代理方法
+/**
+ * 1. 判断是否是一个对象
+ * 2. 判断传入的是否已经是一个响应式对象
+ * 3. 判断该对象是否已经 在proxyMap 中存在过代理对象了
+ * 4. 最后才是执行new Proxy
+ * @param target 被代理对象
+ * @param isReadonly 是否只读
+ * @param baseHandlers 对应的proxy传入的handler 现在只有对象的
+ * @param proxyMap 对应的代理map
+ * @returns 
+ */
 const createReactiveObject = (
-  target: object,
+  target: Target,
   isReadonly: boolean,
   baseHandlers: ProxyHandler<any>,
   proxyMap: WeakMap<object, any>,
@@ -16,6 +43,15 @@ const createReactiveObject = (
       console.warn(`value cannot be made reactive: ${String(target)}`);
     }
     return target;
+  }
+
+  // 已经是一个proxy 直接返回
+  // 不能是只读
+  if (
+    target[ReactiveFlags.RAW] &&
+    !(isReadonly && target[ReactiveFlags.IS_REACTIVE])
+  ) {
+    return target
   }
 
   // proxyMap 中取出 对应的 响应式对象
@@ -30,8 +66,16 @@ const createReactiveObject = (
   return proxy;
 };
 
+/**
+ * 
+ * @param target 传入的target
+ */
 export function reactive<T extends object>(target: T): T;
 export function reactive(target: object) {
+  // 如果传入的是一个readonly 的 直接返回就好
+  if (isReadonly(target)) {
+    return target
+  }
   return createReactiveObject(target, false, mutableHandlers, reactiveMap);
 }
 
@@ -48,4 +92,15 @@ export type DeepReadonly<T> = T extends Builtin
 export function readonly<T extends object>(target: T):DeepReadonly<T>;
 export function readonly(target: object) {
   return createReactiveObject(target, true, readonlyHandlers, readonlyMap);
+}
+
+export const isReactive: (value: unknown) => boolean = (value) => {
+  if (isReadonly(value)) {
+    return isReactive((value as Target)[ReactiveFlags.RAW])
+  }
+  return !!(value && (value as Target)[ReactiveFlags.IS_REACTIVE])
+}
+
+export const isReadonly = (value: unknown) => {
+  return !!(value && (value as Target)["__v_isReadonly"])
 }
