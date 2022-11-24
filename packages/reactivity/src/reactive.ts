@@ -29,6 +29,7 @@ const createReactiveObject = (
   return proxy
 };
 
+export function reactive<T extends object>(target: T): T
 export function reactive(target: object) {
   return createReactiveObject(
     target,
