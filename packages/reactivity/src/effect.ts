@@ -1,9 +1,9 @@
-import { extend } from '../../shared';
+import { extend, isArray } from '../../shared';
 
 type KeyToDepMap = Map<any, Set<ReactiveEffect<any>>>;
 const targetMap = new WeakMap<any, KeyToDepMap>();
 export let activeEffect: ReactiveEffect | undefined;
-export let shouldTrack = true
+export let shouldTrack = true;
 
 export type EffectScheduler = (...args: any[]) => any;
 
@@ -14,8 +14,8 @@ export interface ReactiveEffectOptions {
 }
 
 export interface ReactiveEffectRunner<T = any> {
-  (): T
-  effect: ReactiveEffect
+  (): T;
+  effect: ReactiveEffect;
 }
 
 export class ReactiveEffect<T = any> {
@@ -25,7 +25,7 @@ export class ReactiveEffect<T = any> {
   deps: Set<ReactiveEffect>[] = []; // 啥时候存 track的时候 收集依赖的时候就可以存了
   constructor(
     public fn: () => T,
-    public scheduler: EffectScheduler | null = null
+    public scheduler: EffectScheduler | null = null,
   ) {}
   run() {
     if (!this.active) {
@@ -40,7 +40,7 @@ export class ReactiveEffect<T = any> {
     }
   }
   stop() {
-    // 清除依赖 
+    // 清除依赖
     // 修改active 为false
     // 存在 onstop 时执行onstop
     if (this.active) {
@@ -55,19 +55,17 @@ export class ReactiveEffect<T = any> {
 
 /**
  * 清除effect deps
- * @param effect 
+ * @param effect
  */
 const clearEffects = (effect: ReactiveEffect) => {
   const { deps } = effect;
   if (deps.length !== 0) {
-    for(let i = 0; i < deps.length; i++) {
+    for (let i = 0; i < deps.length; i++) {
       deps[i].delete(effect);
     }
     deps.length = 0;
   }
-}
-
-
+};
 
 /**
  * effect
@@ -93,7 +91,7 @@ export const effect = <T = any>(
 };
 
 export function stop(runner: ReactiveEffectRunner) {
-  runner.effect.stop()
+  runner.effect.stop();
 }
 
 /**
@@ -103,7 +101,7 @@ export function stop(runner: ReactiveEffectRunner) {
  * 4. 存入activeEffect 的deps 中 方便effect 执行stop 方法清空依赖
  * @param target 收集的对象
  * @param key 收集对象的key
- * @returns 
+ * @returns
  */
 export const track = (target: object, key: unknown) => {
   if (activeEffect && shouldTrack) {
@@ -118,10 +116,14 @@ export const track = (target: object, key: unknown) => {
       dep = new Set();
       depsMap.set(key, dep);
     }
-    dep.add(activeEffect!);
-    // 将effect 对应的依赖 存到 effect 的 deps上
-    activeEffect.deps.push(dep);
+    trackEffects(dep);
   }
+};
+
+export const trackEffects = (dep: Set<ReactiveEffect>) => {
+  dep.add(activeEffect!);
+  // 将effect 对应的依赖 存到 effect 的 deps上
+  activeEffect!.deps.push(dep);
 };
 
 /**
@@ -146,18 +148,47 @@ export const trigger = (
   // 收集的 deps
   let deps: (Set<ReactiveEffect> | undefined)[] = [];
   deps.push(depsMap.get(key));
-  const effects: ReactiveEffect[] = [];
-  for (const dep of deps) {
-    if (dep) {
-      effects.push(...dep);
+  // const effects: ReactiveEffect[] = [];
+  // for (const dep of deps) {
+  //   if (dep) {
+  //     effects.push(...dep);
+  //   }
+  // }
+  // // 触发依赖
+  // effects.forEach((effect) => {
+  //   if (effect.scheduler) {
+  //     effect.scheduler();
+  //   } else {
+  //     effect.run();
+  //   }
+  // });
+
+  if (deps.length === 1) {
+    if (deps[0]) {
+      triggerEffects(deps[0])
     }
+  } else {
+    const effects: ReactiveEffect[] = [];
+    for (const dep of deps) {
+      if (dep) {
+        effects.push(...dep);
+      }
+    }
+    triggerEffects(new Set(effects));
   }
-  // 触发依赖
-  effects.forEach((effect) => {
-    if (effect.scheduler) {
-      effect.scheduler();
-    } else {
-      effect.run();
-    }
-  });
 };
+
+export const triggerEffects = (dep: Set<ReactiveEffect> | ReactiveEffect[]) => {
+  const effects = isArray(dep) ? dep : [...dep];
+  for (const effect of effects) {
+    triggerEffect(effect);
+  }
+};
+
+function triggerEffect(effect: ReactiveEffect) {
+  if (effect.scheduler) {
+    effect.scheduler();
+  } else {
+    effect.run();
+  }
+}

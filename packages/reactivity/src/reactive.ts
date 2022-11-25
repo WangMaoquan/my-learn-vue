@@ -122,3 +122,12 @@ export function isShallow(value: unknown): boolean {
 export function isProxy(value: unknown): boolean {
   return isReactive(value) || isReadonly(value)
 }
+
+export function toRaw<T>(observed: T): T {
+  const raw = observed && (observed as Target)["__v_raw"];
+  return raw ? toRaw(raw) : observed;
+}
+
+export function toReactive<T>(value: T): T {
+  return isObject(value) ? reactive(value) : value
+}
