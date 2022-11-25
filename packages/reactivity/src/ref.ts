@@ -68,7 +68,11 @@ export type UnwrapRefSimple<T> = T extends number | string | boolean | Ref
     }
   : T;
 
-  export function isRef<T>(r: Ref<T> | unknown): r is Ref<T>
-  export function isRef(r: any): r is Ref {
-    return !!(r && r.__v_isRef === true)
-  }
+export function isRef<T>(r: Ref<T> | unknown): r is Ref<T>;
+export function isRef(r: any): r is Ref {
+  return !!(r && r.__v_isRef === true);
+}
+
+export function unref<T>(ref: Ref<T> | T): T {
+  return isRef(ref) ? ref.value : ref
+}
