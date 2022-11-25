@@ -1,4 +1,4 @@
-import { isReactive, isShallow, reactive, shallowReadonly } from './../src/reactive';
+import { isProxy, isReactive, isShallow, reactive, shallowReadonly } from './../src/reactive';
 import { shallowReactive } from '../src/reactive';
 
 describe('shallowReactive', () => {
@@ -31,5 +31,18 @@ describe('shallowReactive', () => {
     const shallowReadonlyObserved = shallowReadonly(origianl);
     expect(isShallow(shallowReactiveObserved)).toBe(true)
     expect(isShallow(shallowReadonlyObserved)).toBe(true)
+  })
+
+  it('isProxy', () => {
+    const original = {
+      person: {
+        age: 21,
+        name: 'decade'
+      },
+      like: ["music"]
+    }
+    const observed = shallowReactive(original);
+    expect(isProxy(observed)).toBe(true);
+    expect(isProxy(observed.like)).toBe(false);
   })
 });

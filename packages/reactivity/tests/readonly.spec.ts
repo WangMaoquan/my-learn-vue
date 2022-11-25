@@ -1,4 +1,4 @@
-import { isReadonly } from './../src/reactive';
+import { isProxy, isReadonly } from './../src/reactive';
 import { readonly } from '../src/reactive';
 
 describe('readonly', () => {
@@ -31,5 +31,18 @@ describe('readonly', () => {
 
     expect(isReadonly(wrapped.like)).toBe(true);
     expect(isReadonly(original.like)).not.toBe(true);
+  })
+
+  it('isProxy', () => {
+    const original = {
+      person: {
+        age: 21,
+        name: 'decade'
+      },
+      like: ["music"]
+    }
+    const observed = readonly(original);
+    expect(isProxy(observed)).toBe(true);
+    expect(isProxy(observed.like)).toBe(true)
   })
 });

@@ -1,4 +1,4 @@
-import { isReactive, shallowReadonly } from "../src/reactive"
+import { isProxy, isReactive, shallowReadonly } from "../src/reactive"
 
 describe('shallowReadonly', () => {
   it('should not make non-reactive properties reactive', () => {
@@ -16,5 +16,18 @@ describe('shallowReadonly', () => {
       `Set operation on key "n" failed: target is readonly.`
     // @ts-ignore
     ).toHaveBeenWarned()
+  })
+
+  it('isProxy', () => {
+    const original = {
+      person: {
+        age: 21,
+        name: 'decade'
+      },
+      like: ["music"]
+    }
+    const observed = shallowReadonly(original);
+    expect(isProxy(observed)).toBe(true);
+    expect(isProxy(observed.like)).toBe(false);
   })
 })

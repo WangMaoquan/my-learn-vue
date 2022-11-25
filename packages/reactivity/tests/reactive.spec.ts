@@ -1,4 +1,4 @@
-import { isReactive, reactive } from "../src/reactive";
+import { isProxy, isReactive, reactive } from "../src/reactive";
 
 describe('reactive', () => {
   it('test', () => {
@@ -29,5 +29,18 @@ describe('reactive', () => {
     const observed = reactive(original);
     expect(isReactive(observed.person)).toBe(true);
     expect(isReactive(original.like)).not.toBe(true);
+  })
+
+  it('isProxy', () => {
+    const original = {
+      person: {
+        age: 21,
+        name: 'decade'
+      },
+      like: ["music"]
+    }
+    const observed = reactive(original);
+    expect(isProxy(observed)).toBe(true);
+    expect(isProxy(observed.like)).toBe(true)
   })
 })
