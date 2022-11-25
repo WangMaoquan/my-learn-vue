@@ -1,5 +1,5 @@
 import { effect } from '../src/effect';
-import { ref } from  '../src/ref'
+import { isRef, ref } from  '../src/ref'
 
 describe('reactivity/ref', () => {
   it('ref', () => {
@@ -36,5 +36,17 @@ describe('reactivity/ref', () => {
     expect(dummy).toBe(1)
     a.value.count = 2
     expect(dummy).toBe(2)
+  })
+
+  it('isRef', () => {
+    const count = ref(1);
+    expect(isRef(count)).toBe(true);
+
+    const state = ref({
+      age: 1,
+      like: ref(['music'])
+    });
+    expect(isRef(state)).toBe(true);
+    expect(isRef(state.value.like)).toBe(true);
   })
 })
