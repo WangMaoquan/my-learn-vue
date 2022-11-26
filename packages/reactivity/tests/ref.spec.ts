@@ -1,5 +1,5 @@
 import { effect } from '../src/effect';
-import { isRef, ref, unref } from  '../src/ref'
+import { isRef, proxyRefs, ref, unref } from  '../src/ref'
 
 describe('reactivity/ref', () => {
   it('ref', () => {
@@ -53,5 +53,22 @@ describe('reactivity/ref', () => {
   it('unref', () => {
     const count = ref(1);
     expect(unref(count)).toBe(1);
+  })
+
+  it('proxyRefs', () => {
+    const original = {
+      age: 10,
+      like: ref(['music'])
+    }
+
+    const proxyRefsResult = proxyRefs(original);
+
+    expect(proxyRefsResult.age).toBe(10);
+    expect(proxyRefsResult.like).toEqual(["music"])
+
+    proxyRefsResult.like = ["sing"]
+    proxyRefsResult.age = 20;
+    expect(proxyRefsResult.age).toBe(20);
+    expect(proxyRefsResult.like).toEqual(["sing"])
   })
 })
