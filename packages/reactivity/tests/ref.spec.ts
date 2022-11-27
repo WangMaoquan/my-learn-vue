@@ -47,7 +47,9 @@ describe('reactivity/ref', () => {
       like: ref(['music'])
     });
     expect(isRef(state)).toBe(true);
-    expect(isRef(state.value.like)).toBe(true);
+    
+    // 数组是不需要.value 的
+    expect(isRef(state.value.like)).toBe(false);
   })
 
   it('unref', () => {
