@@ -12,6 +12,7 @@ import {
   readonly,
   reactive,
 } from './reactive';
+import { isRef } from './ref';
 
 /**
  * 创建 proxy get 的工厂函数
@@ -53,6 +54,9 @@ const createGetter = (isReadonly = false, shallow = false) => {
     }
 
     // todo针对传入进来target 是 ref
+    if (isRef(res)) {
+      return isArray(target) && isIntegerKey(key) ? res : res.value
+    }
 
     // 这里就是处理用到的时候才会去代理
     // 不像vue2初始化时 会递归defineProperty
