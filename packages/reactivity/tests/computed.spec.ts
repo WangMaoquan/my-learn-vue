@@ -1,5 +1,6 @@
 import { reactive } from "../src/reactive"
 import {computed} from "../src/computed" 
+import { effect } from "../src/effect"
 
 describe('reactivity/computed', () => {
   it('should return updated value', () => {
@@ -38,17 +39,17 @@ describe('reactivity/computed', () => {
     expect(getter).toHaveBeenCalledTimes(2)
   })
 
-  // it('should trigger effect', () => {
-  //   const value = reactive<{ foo?: number }>({})
-  //   const cValue = computed(() => value.foo)
-  //   let dummy
-  //   effect(() => {
-  //     dummy = cValue.value
-  //   })
-  //   expect(dummy).toBe(undefined)
-  //   value.foo = 1
-  //   expect(dummy).toBe(1)
-  // })
+  it('should trigger effect', () => {
+    const value = reactive<{ foo?: number }>({})
+    const cValue = computed(() => value.foo)
+    let dummy
+    effect(() => {
+      dummy = cValue.value
+    })
+    expect(dummy).toBe(undefined)
+    value.foo = 1
+    expect(dummy).toBe(1)
+  })
 
   // it('should work when chained', () => {
   //   const value = reactive({ foo: 0 })

@@ -23,6 +23,7 @@ export class ReactiveEffect<T = any> {
   onStop?: () => void;
   lazy?: boolean;
   deps: Set<ReactiveEffect>[] = []; // 啥时候存 track的时候 收集依赖的时候就可以存了
+  computed?: boolean;
   constructor(
     public fn: () => T,
     public scheduler: EffectScheduler | null = null,
@@ -127,6 +128,10 @@ export const trackEffects = (dep: Set<ReactiveEffect>) => {
   activeEffect!.deps.push(dep);
 };
 
+export const canTrackEffect = () => {
+  return shouldTrack && activeEffect
+}
+
 /**
  * 触发依赖更新的方法
  * @param target 获取target 对应的 dep依赖map
@@ -181,13 +186,21 @@ export const trigger = (
 
 export const triggerEffects = (dep: Set<ReactiveEffect> | ReactiveEffect[]) => {
   const effects = isArray(dep) ? dep : [...dep];
+  // 先执行 computed
   for (const effect of effects) {
-    triggerEffect(effect);
+    if (effect.computed) {
+      triggerEffect(effect);
+    }
+  }
+  // 再执行非 computed
+  for (const effect of effects) {
+    if (!effect.computed) {
+      triggerEffect(effect);
+    }
   }
 };
 
 function triggerEffect(effect: ReactiveEffect) {
-  debugger
   if (effect !== activeEffect) {
     if (effect.scheduler) {
       effect.scheduler();
