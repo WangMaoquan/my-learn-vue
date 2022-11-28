@@ -1,3 +1,4 @@
+import { effect } from "../src/effect";
 import { isProxy, isReactive, reactive } from "../src/reactive";
 
 describe('reactive', () => {
@@ -7,6 +8,9 @@ describe('reactive', () => {
 
     expect(observed).not.toBe(original);
     expect(observed.foo).toBe(1);
+
+    expect("foo" in observed).toBe(true);
+    expect(Object.keys(observed)).toEqual(["foo"])
   })
 
   it('isReactive', () => {
