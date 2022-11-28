@@ -1,4 +1,4 @@
-import { extend, isObject } from './../../shared/index';
+import { extend, isObject, isSymbol } from './../../shared/index';
 import { hasChanged, hasOwn, isArray, isIntegerKey } from '../../shared';
 import { warn } from '../../shared/warning';
 import { track, trigger } from './effect';
@@ -13,6 +13,13 @@ import {
   reactive,
 } from './reactive';
 import { isRef } from './ref';
+
+const builtInSymbols = new Set(
+  Object.getOwnPropertyNames(Symbol)
+    .filter(key => key !== 'arguments' && key !== 'caller')
+    .map(key => (Symbol as any)[key])
+    .filter(isSymbol)
+)
 
 /**
  * 创建 proxy get 的工厂函数
@@ -96,6 +103,42 @@ const createSetter = (isShallow = false) => {
 };
 
 // todo has / deleteProperty / ownKeys
+// has / ownKeys 是去收集依赖, deleteProperty是去触发依赖
+
+/**
+ * 判断key是否是 内置或者自定义的symbol key
+ * @param target object
+ * @param key 判断的key
+ * @returns 
+ */
+function has(target: object, key: string | symbol): boolean {
+  const result = Reflect.has(target, key)
+  if (!isSymbol(key) || !builtInSymbols.has(key)) {
+    // 不是自定义的或者内置的symbol key 就触发
+    track(target, key)
+  }
+  return result
+}
+
+/**
+ * 这个key 必须是这个对象自己的, 删除原型链上的key 是不需要trigger的
+ * @param target 
+ * @param key 
+ */
+function deleteProperty(target: object, key: symbol | string) : boolean {
+  const hadKey = hasOwn(target, key);
+  const result = Reflect.deleteProperty(target, key);
+  if (hadKey && result) {
+    trigger(target, key, undefined, (target as any)[key])
+  }
+  return result;
+}
+
+function ownKeys(target: object): (string | symbol)[] {
+  // 触发 ownkeys Object.keys 拿不到key 的所以我们自定义一个
+  track(target, 'ownKey');
+  return Reflect.ownKeys(target)
+}
 
 // base
 const get = createGetter();
@@ -114,6 +157,9 @@ const shallowReadonlyGet = createGetter(false, true);
 export const mutableHandlers: ProxyHandler<object> = {
   get,
   set,
+  has,
+  ownKeys,
+  deleteProperty
 };
 
 export const readonlyHandlers: ProxyHandler<object> = {
