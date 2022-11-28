@@ -37,6 +37,7 @@ export class ReactiveEffect<T = any> {
       return this.fn();
     } finally {
       shouldTrack = false;
+      activeEffect = undefined;
     }
   }
   stop() {
@@ -186,9 +187,12 @@ export const triggerEffects = (dep: Set<ReactiveEffect> | ReactiveEffect[]) => {
 };
 
 function triggerEffect(effect: ReactiveEffect) {
-  if (effect.scheduler) {
-    effect.scheduler();
-  } else {
-    effect.run();
+  debugger
+  if (effect !== activeEffect) {
+    if (effect.scheduler) {
+      effect.scheduler();
+    } else {
+      effect.run();
+    }
   }
 }
