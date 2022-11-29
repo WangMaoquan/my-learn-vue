@@ -1,4 +1,5 @@
 import { effect } from '../src/effect';
+import { reactive } from '../src/reactive';
 import { isRef, proxyRefs, ref, unref } from  '../src/ref'
 
 describe('reactivity/ref', () => {
@@ -72,5 +73,45 @@ describe('reactivity/ref', () => {
     proxyRefsResult.age = 20;
     expect(proxyRefsResult.age).toBe(20);
     expect(proxyRefsResult.like).toEqual(["sing"])
+  })
+
+  it('should work without initial value', () => {
+    const a = ref()
+    let dummy
+    effect(() => {
+      dummy = a.value
+    })
+    expect(dummy).toBe(undefined)
+    a.value = 2
+    expect(dummy).toBe(2)
+  })
+
+  it('should work like a normal property when nested in a reactive object', () => {
+    const a = ref(1)
+    const obj = reactive({
+      a,
+      b: {
+        c: a
+      }
+    })
+
+    let dummy1: number
+    let dummy2: number
+
+    effect(() => {
+      dummy1 = obj.a
+      dummy2 = obj.b.c
+    })
+
+    const assertDummiesEqualTo = (val: number) =>
+      [dummy1, dummy2].forEach(dummy => expect(dummy).toBe(val))
+
+    assertDummiesEqualTo(1)
+    a.value++
+    assertDummiesEqualTo(2)
+    obj.a++
+    assertDummiesEqualTo(3)
+    // obj.b.c++
+    // assertDummiesEqualTo(4)
   })
 })
