@@ -1,5 +1,6 @@
 import { isObject } from '../../shared';
 import { mutableHandlers, readonlyHandlers, shallowReactiveHandlers, shallowReadonlyHandlers } from './baseHandler';
+import { Ref, UnwrapRefSimple } from './ref';
 
 export const reactiveMap = new WeakMap<Target, any>()
 export const shallowReactiveMap = new WeakMap<Target, any>()
@@ -66,11 +67,13 @@ const createReactiveObject = (
   return proxy;
 };
 
+export type UnwrapNestRefs<T> = T extends Ref ? T : UnwrapRefSimple<T>
+
 /**
  * 
  * @param target 传入的target
  */
-export function reactive<T extends object>(target: T): T;
+export function reactive<T extends object>(target: T): UnwrapNestRefs<T>;
 export function reactive(target: object) {
   // 如果传入的是一个readonly 的 直接返回就好
   if (isReadonly(target)) {
@@ -87,6 +90,7 @@ export type DeepReadonly<T> = T extends Builtin
   ? T
   : T extends {}
   ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+  : T extends Ref<infer V> ? V
   : Readonly<T>;
 
 export function readonly<T extends object>(target: T):DeepReadonly<T>;
