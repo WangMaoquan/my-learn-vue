@@ -11,6 +11,9 @@ import {
   isReactive,
   readonly,
   reactive,
+  isReadonly,
+  isShallow,
+  toRaw,
 } from './reactive';
 import { isRef } from './ref';
 
@@ -75,7 +78,7 @@ const createGetter = (isReadonly = false, shallow = false) => {
   };
 };
 
-const createSetter = (isShallow = false) => {
+const createSetter = (shallow = false) => {
   return function set(
     target: object,
     key: string | symbol,
@@ -84,6 +87,22 @@ const createSetter = (isShallow = false) => {
   ) {
     // 取出旧值
     let oldValue = (target as any)[key];
+
+    // 如果是 computed 且回调传入的 是一个getter 会进入这里
+    if (isReadonly(oldValue) && isRef(oldValue) && !isRef(value)) {
+      return false;
+    }
+
+    if (!shallow) {
+      if (!isShallow(value) && !isReadonly(value)) {
+        oldValue = toRaw(oldValue)
+        value = toRaw(value)
+      }
+      if (!isArray(target) && isRef(oldValue) && !isRef(value)) {
+        oldValue.value = value
+        return true
+      }
+    }
 
     // 判断 是否存在该 key
     const hadKey =
@@ -97,6 +116,9 @@ const createSetter = (isShallow = false) => {
     } else if (hasChanged(value, oldValue)) {
       trigger(target, key, value, oldValue);
     }
+
+    // todo  deal ref
+
 
     return result;
   };
