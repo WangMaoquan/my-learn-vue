@@ -1,4 +1,5 @@
-import { isObject } from '../../shared';
+import { CollectionTypes, shallowCollectionHandlers, shallowReadonlyCollectionHandlers, mutableCollectionHandlers, readonlyCollectionHandlers } from './collectionHandlers';
+import { isObject, toRawType } from '../../shared';
 import { mutableHandlers, readonlyHandlers, shallowReactiveHandlers, shallowReadonlyHandlers } from './baseHandler';
 import { Ref, UnwrapRefSimple } from './ref';
 
@@ -11,7 +12,8 @@ export const enum ReactiveFlags {
   IS_REACTIVE = '__v_isReactive', // 约定的是响应式对象的key
   IS_READONLY = '__v_isReadonly', // 约定的是 只读对象的key
   IS_SHALLOW = '__v_isShallow', // 约定的浅包一层的key
-  RAW = '__v_raw' // 约定的 返回proxy 最开始代理的那个 object 的key
+  RAW = '__v_raw', // 约定的 返回proxy 最开始代理的那个 object 的key
+  SKIP = '__v_skip',
 }
 
 export interface Target {
@@ -19,6 +21,34 @@ export interface Target {
   [ReactiveFlags.IS_READONLY]?: boolean
   [ReactiveFlags.IS_SHALLOW]?: boolean
   [ReactiveFlags.RAW]?: any
+  [ReactiveFlags.SKIP]?: boolean
+}
+
+enum TargetType  {
+  INVALID = 0, // 不需要被响应式的
+  COMMON = 1, // 除开map/set/weakmap/weakset
+  COLLECTION = 2 // map/set/ weakmap/weakset
+}
+
+function targetTypeMap(rawType: string) {
+  switch (rawType) {
+    case 'Object':
+    case 'Array':
+      return TargetType.COMMON
+    case 'Map':
+    case 'Set':
+    case 'WeakMap':
+    case 'WeakSet':
+      return TargetType.COLLECTION
+    default:
+      return TargetType.INVALID
+  }
+}
+
+function getTargetType(value: Target) {
+  return value[ReactiveFlags.SKIP] || !Object.isExtensible(value)
+    ? TargetType.INVALID
+    : targetTypeMap(toRawType(value))
 }
 
 // todo Map Set 的 代理方法
@@ -37,6 +67,7 @@ const createReactiveObject = (
   target: Target,
   isReadonly: boolean,
   baseHandlers: ProxyHandler<any>,
+  colloctionHandlers: ProxyHandler<any>,
   proxyMap: WeakMap<object, any>,
 ) => {
   if (!isObject(target)) {
@@ -61,7 +92,12 @@ const createReactiveObject = (
     return existingProxy;
   }
 
-  const proxy = new Proxy(target, baseHandlers);
+  const targteType = getTargetType(target);
+  if (targteType === TargetType.INVALID) {
+    return target;
+  }
+
+  const proxy = new Proxy(target, targteType === TargetType.COLLECTION ? colloctionHandlers : baseHandlers);
   proxyMap.set(target, proxy);
 
   return proxy;
@@ -79,7 +115,7 @@ export function reactive(target: object) {
   if (isReadonly(target)) {
     return target
   }
-  return createReactiveObject(target, false, mutableHandlers, reactiveMap);
+  return createReactiveObject(target, false, mutableHandlers, mutableCollectionHandlers, reactiveMap);
 }
 
 type Primitive = string | number | boolean | bigint | symbol | undefined | null;
@@ -95,17 +131,17 @@ export type DeepReadonly<T> = T extends Builtin
 
 export function readonly<T extends object>(target: T):DeepReadonly<T>;
 export function readonly(target: object) {
-  return createReactiveObject(target, true, readonlyHandlers, readonlyMap);
+  return createReactiveObject(target, true, readonlyHandlers, readonlyCollectionHandlers ,readonlyMap);
 }
 
 export function shallowReactive<T extends object>(target: T): T;
 export function shallowReactive(target: object) {
-  return createReactiveObject(target, false, shallowReactiveHandlers, shallowReactiveMap)
+  return createReactiveObject(target, false, shallowReactiveHandlers, shallowCollectionHandlers, shallowReactiveMap)
 }
 
 export function shallowReadonly<T extends object>(target: T): Readonly<T>
 export function shallowReadonly(target: object) {
-  return createReactiveObject(target, true, shallowReadonlyHandlers, shallowReadonlyMap)
+  return createReactiveObject(target, true, shallowReadonlyHandlers, shallowReadonlyCollectionHandlers, shallowReadonlyMap)
 }
 
 export const isReactive: (value: unknown) => boolean = (value) => {
@@ -135,3 +171,6 @@ export function toRaw<T>(observed: T): T {
 export function toReactive<T>(value: T): T {
   return isObject(value) ? reactive(value) : value
 }
+
+export const toReadonly = <T extends unknown>(value: T): T =>
+  isObject(value) ? readonly(value as Record<any, any>) : value
