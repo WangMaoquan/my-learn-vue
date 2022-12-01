@@ -47,4 +47,31 @@ describe('reactive', () => {
     expect(isProxy(observed)).toBe(true);
     expect(isProxy(observed.like)).toBe(true)
   })
+
+  test('observing subtypes of IterableCollections(Map, Set)', () => {
+    // subtypes of Map
+    class CustomMap extends Map {}
+    const cmap = reactive(new CustomMap())
+
+    expect(cmap instanceof Map).toBe(true)
+    expect(isReactive(cmap)).toBe(true)
+
+    cmap.set('key', {})
+    expect(isReactive(cmap.get('key'))).toBe(true)
+
+    // subtypes of Set
+    // class CustomSet extends Set {}
+    // const cset = reactive(new CustomSet())
+
+    // expect(cset instanceof Set).toBe(true)
+    // expect(isReactive(cset)).toBe(true)
+
+    // let dummy
+    // effect(() => (dummy = cset.has('value')))
+    // expect(dummy).toBe(false)
+    // cset.add('value')
+    // expect(dummy).toBe(true)
+    // cset.delete('value')
+    // expect(dummy).toBe(false)
+  })
 })
