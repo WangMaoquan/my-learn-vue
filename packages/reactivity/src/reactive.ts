@@ -1,5 +1,5 @@
 import { CollectionTypes, shallowCollectionHandlers, shallowReadonlyCollectionHandlers, mutableCollectionHandlers, readonlyCollectionHandlers } from './collectionHandlers';
-import { isObject, toRawType } from '../../shared';
+import { def, isObject, toRawType } from '../../shared';
 import { mutableHandlers, readonlyHandlers, shallowReactiveHandlers, shallowReadonlyHandlers } from './baseHandler';
 import { Ref, UnwrapRefSimple } from './ref';
 
@@ -174,3 +174,8 @@ export function toReactive<T>(value: T): T {
 
 export const toReadonly = <T extends unknown>(value: T): T =>
   isObject(value) ? readonly(value as Record<any, any>) : value
+
+export const markRaw = <T extends object>(value: T): T => {
+  def(value, ReactiveFlags.SKIP, true);
+  return value;
+}
