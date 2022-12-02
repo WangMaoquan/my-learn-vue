@@ -60,18 +60,18 @@ describe('reactive', () => {
     expect(isReactive(cmap.get('key'))).toBe(true)
 
     // subtypes of Set
-    // class CustomSet extends Set {}
-    // const cset = reactive(new CustomSet())
+    class CustomSet extends Set {}
+    const cset = reactive(new CustomSet())
 
-    // expect(cset instanceof Set).toBe(true)
-    // expect(isReactive(cset)).toBe(true)
+    expect(cset instanceof Set).toBe(true)
+    expect(isReactive(cset)).toBe(true)
 
-    // let dummy
-    // effect(() => (dummy = cset.has('value')))
-    // expect(dummy).toBe(false)
-    // cset.add('value')
-    // expect(dummy).toBe(true)
-    // cset.delete('value')
-    // expect(dummy).toBe(false)
+    let dummy
+    effect(() => (dummy = cset.has('value')))
+    expect(dummy).toBe(false)
+    cset.add('value')
+    expect(dummy).toBe(true)
+    cset.delete('value')
+    expect(dummy).toBe(false)
   })
 })

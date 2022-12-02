@@ -1,6 +1,13 @@
 import { hasChanged, toRawType } from '../../shared';
 import { track, trigger } from './effect';
-import { ReactiveFlags, toRaw, Target, toReactive, toReadonly } from './reactive';
+import {
+  ReactiveFlags,
+  toRaw,
+  Target,
+  toReactive,
+  toReadonly,
+  isReadonly,
+} from './reactive';
 export type CollectionTypes = IterableCollections | WeakCollections;
 
 // Map 和 Set 是实现了 Symbol.iterator 所以搞了一个新的type
@@ -15,7 +22,11 @@ type SetTypes = Set<any> | WeakSet<any>;
 const getProto = <T extends CollectionTypes>(v: T): any =>
   Reflect.getPrototypeOf(v);
 
-  const toShallow = <T extends unknown>(value: T): T => value
+const toShallow = <T extends unknown>(value: T): T => value;
+
+/**
+ * 注意set/weakSet/map/weakMap 执行新增的操作时 如果传入的是一个reactiveObject 只会将这个reactiveObject的 代理的原始target 添加进去
+ */
 
 /**
  * 除了 target 和 key 外我们也要注意是否是只读 是否是 浅包一层
@@ -39,12 +50,12 @@ const get = (
   if (!isReadonly) {
     // 收集依赖
     if (key !== rawKey) {
-      track(rawTarget, key)
+      track(rawTarget, key);
     }
     track(target, rawKey);
   }
-  const wrap = isShallow ? toShallow : isReadonly ? toReadonly : toReactive
-  return wrap(target.get(key))
+  const wrap = isShallow ? toShallow : isReadonly ? toReadonly : toReactive;
+  return wrap(target.get(key));
 };
 
 function set(this: MapTypes, key: unknown, value: unknown) {
@@ -73,7 +84,75 @@ function set(this: MapTypes, key: unknown, value: unknown) {
   }
 
   return this;
-};
+}
+
+function has(this: CollectionTypes, key: unknown, isReadonly = false) {
+  const target = (this as Target)[ReactiveFlags.RAW];
+  const rawTarget = toRaw(target);
+  const rawKey = toRaw(key);
+  if (!isReadonly) {
+    if (key !== rawKey) {
+      track(rawTarget, key);
+    }
+    track(target, rawKey);
+  }
+  return rawKey === key ? target.has(key) : target.has(rawKey);
+}
+
+/**
+ * set/ weakset
+ * 1. 保证是target 是原始的target
+ * 2. 通过原型链拿到 has 方法
+ * 3. 保证value 是原始value
+ * 4. 判断是否有改值
+ * 5. 将原始的value add 进原始对象, 并派发更新
+ * 6. 返回this 链式调用
+ * @param this 
+ * @param value 
+ * @returns 
+ */
+function add(this: SetTypes, value: unknown) {
+  const target = toRaw(this);
+  const { has } = getProto(target)
+  value = toRaw(value);
+  const hadKey = has.call(target, value);
+  if (!hadKey) {
+    target.add(value);
+    trigger(target, value)
+  }
+  return this
+}
+
+/**
+ * 1. 获取原始对象
+ * 2. 拿到has/get(set 无)
+ * 3. 判断是否有该key/value
+ * 4. 执行delete
+ * 5. 删除成功再去派发更新
+ * 6. 返回this
+ * @param this 
+ * @param key 
+ * @returns 
+ */
+function deleteEntry(this: CollectionTypes, key: unknown) {
+  const target = toRaw(this);
+  const { has, get } = getProto(target);
+  let hadKey = has.call(target, key);
+  if (!hadKey) {
+    key = toRaw(key);
+    hadKey = has.call(target, key)
+  } else {
+    checkIdentityKeys(target, has, key);
+  }
+
+  // 因为  set 是没有get的
+  const oldValue = get ? get.call(target, key) : undefined;
+  const result = target.delete(key);
+  if (hadKey) {
+    trigger(target, key, undefined, oldValue)
+  }
+  return result;
+}
 
 /**
  * 我们首先 要明白 map.get/set, set.add/has 的这个dot 其实是访问的 get
@@ -126,6 +205,9 @@ const createInstrumentations = () => {
       return get(this, key);
     },
     set,
+    has,
+    add,
+    delete: deleteEntry
   };
 
   const shallowInstrumentions: Record<string, Function> = {
@@ -133,6 +215,9 @@ const createInstrumentations = () => {
       return get(this, key, false, true);
     },
     set,
+    has,
+    add,
+    delete: deleteEntry
   };
 
   const readonlyInstrumentions: Record<string, Function> = {
