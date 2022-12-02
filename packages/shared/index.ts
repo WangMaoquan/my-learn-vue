@@ -32,3 +32,11 @@ export const objectToString = Object.prototype.toString
 export const toTypeString = (value: unknown): string =>
   objectToString.call(value)
 export const toRawType = (value: unknown) => toTypeString(value).slice(8, -1)
+
+export const def = (obj: object, key: string | symbol, value: unknown) => {
+  Object.defineProperty(obj, key, {
+    configurable: true,
+    enumerable: false,
+    value
+  })
+}
