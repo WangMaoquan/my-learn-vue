@@ -163,6 +163,7 @@ describe('readonly', () => {
     });
 
     it('should not allow mutation', () => {
+      // 不是 any 后面会类型报错
       const wrapped: any = readonly([{ foo: 1 }]);
       wrapped[0] = 1;
       expect(wrapped[0]).not.toBe(1);
@@ -253,6 +254,75 @@ describe('readonly', () => {
       expect(map.has(key)).toBe(false);
       expect(
         `Set operation on key "${key}" failed: target is readonly.`,
+        // @ts-ignore
+      ).toHaveBeenWarned();
+    });
+
+    it('readonly + reactive should make get() value also readonly + reactive', () => {
+      const map = reactive(new Map());
+      // const map = reactive(new WeakMap());
+      const roMap = readonly(map);
+      const key = {};
+      map.set(key, {});
+
+      const item = map.get(key);
+      expect(isReactive(item)).toBe(true);
+      expect(isReadonly(item)).toBe(false);
+
+      const roItem = roMap.get(key);
+      expect(isReactive(roItem)).toBe(true);
+      expect(isReadonly(roItem)).toBe(true);
+    });
+
+    it('readonly + reactive should make get() value also readonly + reactive', () => {
+      // const map = reactive(new Map())
+      const map = reactive(new WeakMap());
+      const roMap = readonly(map);
+      const key = {};
+      map.set(key, {});
+
+      const item = map.get(key);
+      expect(isReactive(item)).toBe(true);
+      expect(isReadonly(item)).toBe(false);
+
+      const roItem = roMap.get(key);
+      expect(isReactive(roItem)).toBe(true);
+      expect(isReadonly(roItem)).toBe(true);
+    });
+  });
+
+  describe('readonly set/weakSet', () => {
+    test('should make nested values readonly', () => {
+      const key1 = {};
+      const key2 = {};
+      // const original = new Set([key1, key2])
+      const original = new WeakSet([key1, key2]);
+      const wrapped = readonly(original);
+      expect(wrapped).not.toBe(original);
+      expect(isProxy(wrapped)).toBe(true);
+      expect(isReactive(wrapped)).toBe(false);
+      expect(isReadonly(wrapped)).toBe(true);
+      expect(isReactive(original)).toBe(false);
+      expect(isReadonly(original)).toBe(false);
+      expect(wrapped.has(reactive(key1))).toBe(true);
+      expect(original.has(reactive(key1))).toBe(false);
+    });
+
+    test('should not allow mutation & not trigger effect', () => {
+      // 不是 any 后面会类型报错
+      const set: any = readonly(new Set());
+      // const set = readonly(new WeakSet())
+      const key = {};
+      let dummy;
+      effect(() => {
+        dummy = set.has(key);
+      });
+      expect(dummy).toBe(false);
+      set.add(key);
+      expect(dummy).toBe(false);
+      expect(set.has(key)).toBe(false);
+      expect(
+        `Add operation on key "${key}" failed: target is readonly.`,
         // @ts-ignore
       ).toHaveBeenWarned();
     });
