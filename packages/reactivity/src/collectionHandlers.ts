@@ -1,4 +1,10 @@
-import { capitalize, extend, hasChanged, toRawType } from '../../shared';
+import {
+  capitalize,
+  extend,
+  hasChanged,
+  hasOwn,
+  toRawType,
+} from '../../shared';
 import { track, trigger } from './effect';
 import { TrackOpTypes, TriggerOpTypes } from './operations';
 import {
@@ -108,20 +114,20 @@ function has(this: CollectionTypes, key: unknown, isReadonly = false) {
  * 4. 判断是否有改值
  * 5. 将原始的value add 进原始对象, 并派发更新
  * 6. 返回this 链式调用
- * @param this 
- * @param value 
- * @returns 
+ * @param this
+ * @param value
+ * @returns
  */
 function add(this: SetTypes, value: unknown) {
   const target = toRaw(this);
-  const { has } = getProto(target)
+  const { has } = getProto(target);
   value = toRaw(value);
   const hadKey = has.call(target, value);
   if (!hadKey) {
     target.add(value);
-    trigger(target, value)
+    trigger(target, value);
   }
-  return this
+  return this;
 }
 
 /**
@@ -131,9 +137,9 @@ function add(this: SetTypes, value: unknown) {
  * 4. 执行delete
  * 5. 删除成功再去派发更新
  * 6. 返回this
- * @param this 
- * @param key 
- * @returns 
+ * @param this
+ * @param key
+ * @returns
  */
 function deleteEntry(this: CollectionTypes, key: unknown) {
   const target = toRaw(this);
@@ -141,7 +147,7 @@ function deleteEntry(this: CollectionTypes, key: unknown) {
   let hadKey = has.call(target, key);
   if (!hadKey) {
     key = toRaw(key);
-    hadKey = has.call(target, key)
+    hadKey = has.call(target, key);
   } else {
     checkIdentityKeys(target, has, key);
   }
@@ -150,7 +156,7 @@ function deleteEntry(this: CollectionTypes, key: unknown) {
   const oldValue = get ? get.call(target, key) : undefined;
   const result = target.delete(key);
   if (hadKey) {
-    trigger(target, key, undefined, oldValue)
+    trigger(target, key, undefined, oldValue);
   }
   return result;
 }
@@ -159,14 +165,14 @@ function deleteEntry(this: CollectionTypes, key: unknown) {
 function createReadonlyMethod(type: TriggerOpTypes) {
   return function (this: CollectionTypes, ...args: unknown[]) {
     if (__DEV__) {
-      const key = args[0] ? `on key "${args[0]}" ` : ``
+      const key = args[0] ? `on key "${args[0]}" ` : ``;
       console.warn(
         `${capitalize(type)} operation ${key}failed: target is readonly.`,
-        toRaw(this)
-      )
+        toRaw(this),
+      );
     }
-    return type === TriggerOpTypes.DELETE ? false : this
-  }
+    return type === TriggerOpTypes.DELETE ? false : this;
+  };
 }
 
 /**
@@ -210,7 +216,12 @@ const createInstrumentationGetter = (
       : isReadonly
       ? readonlyInstrumentions
       : mutableInstrumentions;
-    return Reflect.get(instrumentation, key, reciver);
+    return Reflect.get(
+      // 因为没有加下面这个判断 导致 获取map/set的类型时 一直调用的 是instrumentation 这个的 然后测例跑不通
+      hasOwn(instrumentation, key) && key in target ? instrumentation : target,
+      key,
+      reciver,
+    );
   };
 };
 
@@ -222,7 +233,7 @@ const createInstrumentations = () => {
     set,
     has,
     add,
-    delete: deleteEntry
+    delete: deleteEntry,
   };
 
   const shallowInstrumentions: Record<string, Function> = {
@@ -232,7 +243,7 @@ const createInstrumentations = () => {
     set,
     has,
     add,
-    delete: deleteEntry
+    delete: deleteEntry,
   };
 
   const readonlyInstrumentions: Record<string, Function> = {
@@ -241,21 +252,25 @@ const createInstrumentations = () => {
     },
     set: createReadonlyMethod(TriggerOpTypes.SET),
     has(this: MapTypes, key: unknown) {
-      return has.call(this, key, true)
+      return has.call(this, key, true);
     },
     add: createReadonlyMethod(TriggerOpTypes.ADD),
     delete: createReadonlyMethod(TriggerOpTypes.DELETE),
-    clear: createReadonlyMethod(TriggerOpTypes.CLEAR)
+    clear: createReadonlyMethod(TriggerOpTypes.CLEAR),
   };
 
-  const shallowReadonlyInstrumentions: Record<string, Function> = extend({}, readonlyInstrumentions, {
-    get(this: MapTypes, key: unknown) {
-      return get(this, key, true, true);
+  const shallowReadonlyInstrumentions: Record<string, Function> = extend(
+    {},
+    readonlyInstrumentions,
+    {
+      get(this: MapTypes, key: unknown) {
+        return get(this, key, true, true);
+      },
+      has(this: MapTypes, key: unknown) {
+        return has.call(this, key, true);
+      },
     },
-    has(this: MapTypes, key: unknown) {
-      return has.call(this, key, true)
-    },
-  })
+  );
 
   return [
     mutableInstrumentions,
