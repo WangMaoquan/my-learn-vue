@@ -40,3 +40,15 @@ export const def = (obj: object, key: string | symbol, value: unknown) => {
     value
   })
 }
+
+const cacheStringFunction = <T extends (str: string) => string>(fn: T): T => {
+  const cache: Record<string, string> = Object.create(null);
+  return ((str: string) => {
+    const hit = cache[str];
+    return hit || (cache[str] = fn(str))
+  }) as T
+}
+
+export const capitalize = cacheStringFunction(
+  (str: string) => str.charAt(0).toUpperCase() + str.slice(1)
+)
