@@ -1,5 +1,6 @@
-import { hasChanged, toRawType } from '../../shared';
+import { capitalize, extend, hasChanged, toRawType } from '../../shared';
 import { track, trigger } from './effect';
+import { TrackOpTypes, TriggerOpTypes } from './operations';
 import {
   ReactiveFlags,
   toRaw,
@@ -154,6 +155,20 @@ function deleteEntry(this: CollectionTypes, key: unknown) {
   return result;
 }
 
+// readonly 的set / add / delete /clear  都只需要给出警告的 只是处理类型不同而已
+function createReadonlyMethod(type: TriggerOpTypes) {
+  return function (this: CollectionTypes, ...args: unknown[]) {
+    if (__DEV__) {
+      const key = args[0] ? `on key "${args[0]}" ` : ``
+      console.warn(
+        `${capitalize(type)} operation ${key}failed: target is readonly.`,
+        toRaw(this)
+      )
+    }
+    return type === TriggerOpTypes.DELETE ? false : this
+  }
+}
+
 /**
  * 我们首先 要明白 map.get/set, set.add/has 的这个dot 其实是访问的 get
  * 所以我们只需要 自定一个get 然后拿到key (set/ has)调用Reflect.get(target, key) 去走我们自定义的逻辑
@@ -224,13 +239,23 @@ const createInstrumentations = () => {
     get(this: MapTypes, key: unknown) {
       return get(this, key, true, false);
     },
+    set: createReadonlyMethod(TriggerOpTypes.SET),
+    has(this: MapTypes, key: unknown) {
+      return has.call(this, key, true)
+    },
+    add: createReadonlyMethod(TriggerOpTypes.ADD),
+    delete: createReadonlyMethod(TriggerOpTypes.DELETE),
+    clear: createReadonlyMethod(TriggerOpTypes.CLEAR)
   };
 
-  const shallowReadonlyInstrumentions: Record<string, Function> = {
+  const shallowReadonlyInstrumentions: Record<string, Function> = extend({}, readonlyInstrumentions, {
     get(this: MapTypes, key: unknown) {
       return get(this, key, true, true);
     },
-  };
+    has(this: MapTypes, key: unknown) {
+      return has.call(this, key, true)
+    },
+  })
 
   return [
     mutableInstrumentions,
