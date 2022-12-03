@@ -124,6 +124,21 @@ type Builtin = Primitive | Function | Date | Error | RegExp;
 // todo set map ref promise 类型推断
 export type DeepReadonly<T> = T extends Builtin
   ? T
+  // todo readonly map set xxx
+  : T extends Map<infer K, infer V>
+  ? ReadonlyMap<DeepReadonly<K>, DeepReadonly<V>>
+  : T extends ReadonlyMap<infer K, infer V>
+  ? ReadonlyMap<DeepReadonly<K>, DeepReadonly<V>>
+  : T extends WeakMap<infer K, infer V>
+  ? WeakMap<DeepReadonly<K>, DeepReadonly<V>>
+  : T extends Set<infer U>
+  ? ReadonlySet<DeepReadonly<U>>
+  : T extends ReadonlySet<infer U>
+  ? ReadonlySet<DeepReadonly<U>>
+  : T extends WeakSet<infer U>
+  ? WeakSet<DeepReadonly<U>>
+  : T extends Promise<infer U>
+  ? Promise<DeepReadonly<U>>
   : T extends {}
   ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
   : T extends Ref<infer V> ? V
