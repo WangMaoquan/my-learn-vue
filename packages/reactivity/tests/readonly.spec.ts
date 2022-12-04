@@ -1,4 +1,4 @@
-import { isProxy, isReactive, isReadonly, reactive } from './../src/reactive';
+import { isProxy, isReactive, isReadonly, reactive, toRaw } from './../src/reactive';
 import { readonly } from '../src/reactive';
 import { effect } from '../src/effect';
 
@@ -327,4 +327,12 @@ describe('readonly', () => {
       ).toHaveBeenWarned();
     });
   });
+
+  test('calling reactive on an readonly should return readonly', () => {
+    const a = readonly({})
+    const b = reactive(a)
+    expect(isReadonly(b)).toBe(true)
+    // should point to same original
+    expect(toRaw(a)).toBe(toRaw(b))
+  })
 });
