@@ -335,4 +335,48 @@ describe('readonly', () => {
     // should point to same original
     expect(toRaw(a)).toBe(toRaw(b))
   })
+
+  test('readonly should track and trigger if wrapping reactive original', () => {
+    const a = reactive({ n: 1 })
+    const b = readonly(a)
+    // should return true since it's wrapping a reactive source
+    expect(isReactive(b)).toBe(true)
+
+    let dummy
+    effect(() => {
+      dummy = b.n
+    })
+    expect(dummy).toBe(1)
+    a.n++
+    expect(b.n).toBe(2)
+    expect(dummy).toBe(2)
+  })
+
+  test('readonly collection should not track', () => {
+    const map = new Map()
+    map.set('foo', 1)
+
+    const reMap = reactive(map)
+    const roMap = readonly(map)
+
+    let dummy
+    effect(() => {
+      dummy = roMap.get('foo')
+    })
+    expect(dummy).toBe(1)
+    reMap.set('foo', 2)
+    expect(roMap.get('foo')).toBe(2)
+    // should not trigger
+    expect(dummy).toBe(1)
+  })
+
+  test('readonly array should not track', () => {
+    const arr = [1]
+    const roArr = readonly(arr)
+
+    const eff = effect(() => {
+      roArr.includes(2)
+    })
+    expect(eff.effect.deps.length).toBe(0)
+  })
 });
