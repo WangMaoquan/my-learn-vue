@@ -1,6 +1,6 @@
 import { isFunction } from '../../shared';
 import { canTrackEffect, ReactiveEffect, trackEffects, triggerEffects } from './effect';
-import { ReactiveFlags, isReadonly } from './reactive';
+import { ReactiveFlags, isReadonly, toRaw } from './reactive';
 import { Ref } from './ref';
 
 export type ComputedGetter<T> = (...args: any) => T;
@@ -44,12 +44,14 @@ class ComputedRefImpl<T> {
   }
 
   get value() {
+    // 为啥要toRaw 如果没有toRaw 会频繁的进入proxy 的getter, 且造成赋值
+    const self = toRaw(this);
     if (canTrackEffect()) {
-      trackEffects(this.dep);
+      trackEffects(self.dep);
     }
-    if (this._dirty) {
-      this._dirty = false;
-      this._value = this.effect.run();
+    if (self._dirty) {
+      self._dirty = false;
+      self._value = self.effect.run();
     }
 
     return this._value;

@@ -1,6 +1,8 @@
-import { isProxy, isReactive, isReadonly, reactive, toRaw } from './../src/reactive';
+import { isProxy, isReactive, isReadonly, markRaw, reactive, toRaw } from './../src/reactive';
 import { readonly } from '../src/reactive';
 import { effect } from '../src/effect';
+import { ref } from '../src/ref';
+import { computed } from "../src/computed"
 
 type Writable<T> = { -readonly [P in keyof T]: T[P] };
 describe('readonly', () => {
@@ -378,5 +380,71 @@ describe('readonly', () => {
       roArr.includes(2)
     })
     expect(eff.effect.deps.length).toBe(0)
+  })
+
+  test('readonly should track and trigger if wrapping reactive original (collection)', () => {
+    const a = reactive(new Map())
+    const b = readonly(a)
+    // should return true since it's wrapping a reactive source
+    expect(isReactive(b)).toBe(true)
+
+    a.set('foo', 1)
+
+    let dummy
+    effect(() => {
+      dummy = b.get('foo')
+    })
+    expect(dummy).toBe(1)
+    a.set('foo', 2)
+    expect(b.get('foo')).toBe(2)
+    expect(dummy).toBe(2)
+  })
+
+  test('wrapping already wrapped value should return same Proxy', () => {
+    const original = { foo: 1 }
+    const wrapped = readonly(original)
+    const wrapped2 = readonly(wrapped)
+    expect(wrapped2).toBe(wrapped)
+  })
+
+  test('markRaw', () => {
+    const obj = readonly({
+      foo: { a: 1 },
+      bar: markRaw({ b: 2 })
+    })
+    expect(isReadonly(obj.foo)).toBe(true)
+    expect(isReactive(obj.bar)).toBe(false)
+  })
+
+  test('should make ref readonly', () => {
+    const n = readonly(ref(1))
+    // @ts-expect-error
+    n.value = 2
+    expect(n.value).toBe(1)
+    expect(
+      `Set operation on key "value" failed: target is readonly.`
+      // @ts-ignore
+    ).toHaveBeenWarned()
+  })
+
+  test('calling readonly on computed should allow computed to set its private properties', () => {
+    const r = ref<boolean>(false)
+    const c = computed(() => r.value)
+    const rC = readonly(c)
+
+    r.value = true
+
+    expect(rC.value).toBe(true)
+    expect(
+      'Set operation on key "_dirty" failed: target is readonly.'
+      // @ts-ignore
+    ).not.toHaveBeenWarned()
+    // @ts-expect-error - non-existent property
+    rC.randomProperty = true
+
+    expect(
+      'Set operation on key "randomProperty" failed: target is readonly.'
+      //@ts-ignore
+    ).toHaveBeenWarned()
   })
 });
