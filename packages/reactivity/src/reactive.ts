@@ -8,6 +8,11 @@ export const shallowReactiveMap = new WeakMap<Target, any>()
 export const readonlyMap = new WeakMap<Target, any>()
 export const shallowReadonlyMap = new WeakMap<Target, any>()
 
+export declare const ShallowReactiveMarker: unique symbol;
+export type ShallowReactive<T = any> = {
+  [ShallowReactiveMarker]?: true
+} & T;
+
 export const enum ReactiveFlags {
   IS_REACTIVE = '__v_isReactive', // 约定的是响应式对象的key
   IS_READONLY = '__v_isReadonly', // 约定的是 只读对象的key
@@ -149,7 +154,7 @@ export function readonly(target: object) {
   return createReactiveObject(target, true, readonlyHandlers, readonlyCollectionHandlers ,readonlyMap);
 }
 
-export function shallowReactive<T extends object>(target: T): T;
+export function shallowReactive<T extends object>(target: T): ShallowReactive<T>;
 export function shallowReactive(target: object) {
   return createReactiveObject(target, false, shallowReactiveHandlers, shallowCollectionHandlers, shallowReactiveMap)
 }

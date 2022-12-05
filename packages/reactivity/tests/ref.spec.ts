@@ -212,6 +212,7 @@ describe('reactivity/ref', () => {
 
   test('shallowRef', () => {
     /**
+     * ShallowRef 推导类型时 也需要一个唯一的 symbol key
      * 1. new RefImpl 时需要多加一个参数 __v_isShallow
      * 2. set 的时候需要判断 this.__v_isShallow
      */

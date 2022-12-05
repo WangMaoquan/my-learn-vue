@@ -14,10 +14,11 @@ import {
   isReadonly,
   isReactive,
 } from './reactive';
+import type { ShallowReactiveMarker } from './reactive'
 
 declare const RefSymbol: unique symbol;
-declare const ShallowRefMarker: unique symbol
-export type ShallowRef<T = any> = Ref<T> & { [ShallowRefMarker]?: true }
+declare const ShallowRefMarker: unique symbol;
+export type ShallowRef<T = any> = Ref<T> & { [ShallowRefMarker]?: true };
 export interface Ref<T = any> {
   value: T;
   /**
@@ -36,8 +37,16 @@ class RefImpl<T> {
   constructor(value: T, public __v_isShallow = false) {
     // 判断value 是不是ref 再处理
     // 之前没有做这个处理 导致 typeof (ref(ref(1)).value + 1) 为 string
-    this._rawValue = __v_isShallow ? value : isRef<T>(value) ? unref<T>(value) : toRaw(value);
-    this._value = __v_isShallow ? value : isRef<T>(value) ? unref<T>(value) : toReactive(value);
+    this._rawValue = __v_isShallow
+      ? value
+      : isRef<T>(value)
+      ? unref<T>(value)
+      : toRaw(value);
+    this._value = __v_isShallow
+      ? value
+      : isRef<T>(value)
+      ? unref<T>(value)
+      : toReactive(value);
   }
   get value() {
     if (shouldTrack && activeEffect) {
@@ -47,7 +56,8 @@ class RefImpl<T> {
   }
 
   set value(newValue) {
-    const useDirectValue = this.__v_isShallow ||  isShallow(newValue) || isReadonly(newValue);
+    const useDirectValue =
+      this.__v_isShallow || isShallow(newValue) || isReadonly(newValue);
     newValue = useDirectValue ? newValue : toRaw(newValue);
     if (hasChanged(newValue, this._rawValue)) {
       this._rawValue = newValue;
@@ -91,7 +101,7 @@ export type UnwrapRefSimple<T> = T extends
   ? T
   : T extends Array<any>
   ? { [K in keyof T]: UnwrapRefSimple<T[K]> }
-  : T extends object
+  : T extends object & { [ShallowReactiveMarker]?: never }
   ? {
       [P in keyof T]: P extends symbol ? T[P] : UnwrapRef<T[P]>;
     }
