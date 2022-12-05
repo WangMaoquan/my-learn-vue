@@ -1,6 +1,6 @@
 import { effect } from '../src/effect';
 import { reactive } from '../src/reactive';
-import { isRef, proxyRefs, ref, unref } from  '../src/ref'
+import { isRef, proxyRefs, Ref, ref, unref } from  '../src/ref'
 
 describe('reactivity/ref', () => {
   it('ref', () => {
@@ -122,5 +122,12 @@ describe('reactivity/ref', () => {
     const c = b.value + 1;
 
     expect(typeof c).toBe('number')
+  })
+
+  it('should NOT unwrap ref types nested inside arrays', () => {
+    const arr = ref([1, ref(3)]).value
+    expect(isRef(arr[0])).toBe(false)
+    expect(isRef(arr[1])).toBe(true)
+    expect((arr[1] as Ref).value).toBe(3)
   })
 })

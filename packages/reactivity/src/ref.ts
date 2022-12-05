@@ -76,6 +76,8 @@ export type UnwrapRefSimple<T> = T extends
   | Ref
   | CollectionTypes
   ? T
+  : T extends Array<any>
+  ? { [K in keyof T]: UnwrapRefSimple<T[K]> }
   : T extends object
   ? {
       [P in keyof T]: P extends symbol ? T[P] : UnwrapRef<T[P]>;
