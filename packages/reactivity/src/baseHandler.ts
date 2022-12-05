@@ -1,5 +1,5 @@
-import { extend, isObject, isSymbol } from './../../shared/index';
-import { hasChanged, hasOwn, isArray, isIntegerKey } from '../../shared';
+import { makeMap } from "../../shared/makeMap"
+import { hasChanged, hasOwn, isArray, isIntegerKey,extend, isObject, isSymbol } from '../../shared';
 import { warn } from '../../shared/warning';
 import { track, trigger } from './effect';
 import {
@@ -16,6 +16,8 @@ import {
   toRaw,
 } from './reactive';
 import { isRef } from './ref';
+
+const isNonTrackableKeys = /*#__PURE__*/ makeMap(`__proto__,__v_isRef,__isVue`)
 
 const builtInSymbols = new Set(
   Object.getOwnPropertyNames(Symbol)
@@ -57,6 +59,11 @@ const createGetter = (isReadonly = false, shallow = false) => {
     // 只要不是只读 就会收集依赖
     if (!isReadonly) {
       track(target, key);
+    }
+
+    // 增加对symbol 的处理 没有这层处理的话 会访问不到symbol的, 当然如果下面的条件 也都没通过 也可以访问哈哈哈
+    if (isSymbol(key) ? builtInSymbols.has(key) : isNonTrackableKeys(key)) {
+      return res;
     }
 
     if (shallow) {

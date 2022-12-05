@@ -164,4 +164,50 @@ describe('reactivity/ref', () => {
     tupleRef.value[4].value++
     expect(tupleRef.value[4].value).toBe(1)
   })
+
+  it('should keep symbols', () => {
+    const customSymbol = Symbol()
+    const obj = {
+      [Symbol.asyncIterator]: ref(1),
+      [Symbol.hasInstance]: { a: ref('a') },
+      [Symbol.isConcatSpreadable]: { b: ref(true) },
+      [Symbol.iterator]: [ref(1)],
+      [Symbol.match]: new Set<Ref<number>>(),
+      [Symbol.matchAll]: new Map<number, Ref<string>>(),
+      [Symbol.replace]: { arr: [ref('a')] },
+      [Symbol.search]: { set: new Set<Ref<number>>() },
+      [Symbol.species]: { map: new Map<number, Ref<string>>() },
+      [Symbol.split]: new WeakSet<Ref<boolean>>(),
+      [Symbol.toPrimitive]: new WeakMap<Ref<boolean>, string>(),
+      [Symbol.toStringTag]: { weakSet: new WeakSet<Ref<boolean>>() },
+      [Symbol.unscopables]: { weakMap: new WeakMap<Ref<boolean>, string>() },
+      [customSymbol]: { arr: [ref(1)] }
+    }
+
+    const objRef = ref(obj)
+
+    const keys: (keyof typeof obj)[] = [
+      Symbol.asyncIterator,
+      Symbol.hasInstance,
+      Symbol.isConcatSpreadable,
+      Symbol.iterator,
+      Symbol.match,
+      Symbol.matchAll,
+      Symbol.replace,
+      Symbol.search,
+      Symbol.species,
+      Symbol.split,
+      Symbol.toPrimitive,
+      Symbol.toStringTag,
+      Symbol.unscopables,
+      customSymbol
+    ]
+
+    keys.forEach(key => {
+      // 因为是ref 如果没有判断key 是内置symbolkey 或者是不需要 track的key
+      // 会走getter 的 isRef 逻辑, 这里直接返回.value
+      expect(objRef.value[key]).toStrictEqual(obj[key])
+    })
+  })
+
 })
