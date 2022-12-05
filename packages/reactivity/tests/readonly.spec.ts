@@ -447,4 +447,40 @@ describe('readonly', () => {
       //@ts-ignore
     ).toHaveBeenWarned()
   })
+
+  test('setting a readonly object as a property of a reactive object should retain readonly proxy', () => {
+    const r = readonly({})
+    const rr = reactive({}) as any
+    rr.foo = r
+    expect(rr.foo).toBe(r)
+    expect(isReadonly(rr.foo)).toBe(true)
+  })
+
+  test('attempting to write plain value to a readonly ref nested in a reactive object should fail', () => {
+    const r = ref(false)
+    const ror = readonly(r)
+    const obj = reactive({ ror })
+    expect(() => {
+      obj.ror = true
+    }).toThrow()
+    expect(obj.ror).toBe(false)
+  })
+
+  test('replacing a readonly ref nested in a reactive object with a new ref', () => {
+    const r = ref(false)
+    const ror = readonly(r)
+    const obj = reactive({ ror })
+    obj.ror = ref(true) as unknown as boolean
+    expect(obj.ror).toBe(true)
+    expect(toRaw(obj).ror).not.toBe(ror) // ref successfully replaced
+  })
+
+  test('setting readonly object to writable nested ref', () => {
+    const r = ref<any>()
+    const obj = reactive({ r })
+    const ro = readonly({})
+    obj.r = ro
+    expect(obj.r).toBe(ro)
+    expect(r.value).toBe(ro)
+  })
 });
