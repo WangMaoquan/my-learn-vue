@@ -114,4 +114,13 @@ describe('reactivity/ref', () => {
     // obj.b.c++
     // assertDummiesEqualTo(4)
   })
+
+  it('should unwrap nested ref in types', () => {
+    const a = ref(0)
+    const b = ref(a)
+
+    const c = b.value + 1;
+
+    expect(typeof c).toBe('number')
+  })
 })

@@ -32,8 +32,10 @@ class RefImpl<T> {
   private _rawValue: T;
   public readonly __v_isRef = true;
   constructor(value: T) {
-    this._rawValue = toRaw(value);
-    this._value = toReactive(value);
+    // 判断value 是不是ref 再处理
+    // 之前没有做这个处理 导致 typeof (ref(ref(1)).value + 1) 为 string
+    this._rawValue = isRef<T>(value) ? unref<T>(value) : toRaw(value);
+    this._value = isRef<T>(value) ? unref<T>(value) : toReactive(value);
   }
   get value() {
     if (shouldTrack && activeEffect) {
