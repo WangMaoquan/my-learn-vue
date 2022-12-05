@@ -1,6 +1,6 @@
 import { effect } from '../src/effect';
-import { reactive } from '../src/reactive';
-import { isRef, proxyRefs, Ref, ref, unref } from  '../src/ref'
+import { isReactive, reactive } from '../src/reactive';
+import { isRef, proxyRefs, Ref, ref, shallowRef, unref } from  '../src/ref'
 
 describe('reactivity/ref', () => {
   it('ref', () => {
@@ -210,4 +210,22 @@ describe('reactivity/ref', () => {
     })
   })
 
+  test('shallowRef', () => {
+    /**
+     * 1. new RefImpl 时需要多加一个参数 __v_isShallow
+     * 2. set 的时候需要判断 this.__v_isShallow
+     */
+    const sref = shallowRef({ a: 1 })
+    expect(isReactive(sref.value)).toBe(false)
+
+    let dummy
+    effect(() => {
+      dummy = sref.value.a
+    })
+    expect(dummy).toBe(1)
+
+    sref.value = { a: 2 }
+    expect(isReactive(sref.value)).toBe(false)
+    expect(dummy).toBe(2)
+  })
 })
