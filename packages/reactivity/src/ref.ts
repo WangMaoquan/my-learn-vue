@@ -74,6 +74,7 @@ export type UnwrapRefSimple<T> = T extends
   | number
   | string
   | boolean
+  | Function
   | Ref
   | CollectionTypes
   ? T
