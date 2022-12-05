@@ -69,6 +69,7 @@ type UnwrapRef<T> = T extends Ref<infer V>
   : UnwrapRefSimple<T>;
 
 // 传入的T 是number | string | boolean | Ref 时直接返回T, 如果传入的是一个object 对每个键执行重复的判断
+// 先判断 是否是Array 后判断是否是 对象
 export type UnwrapRefSimple<T> = T extends
   | number
   | string
