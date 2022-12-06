@@ -1,5 +1,5 @@
 import { effect } from '../src/effect';
-import { isReactive, reactive } from '../src/reactive';
+import { isReactive, isShallow, reactive } from '../src/reactive';
 import {
   isRef,
   proxyRefs,
@@ -258,5 +258,10 @@ describe('reactivity/ref', () => {
     // force trigger
     triggerRef(sref);
     expect(dummy).toBe(2);
+  });
+
+  test('shallowRef isShallow', () => {
+    expect(isShallow(shallowRef(1))).toBe(true);
+    expect(isShallow(shallowRef({ a: 1 }))).toBe(true);
   });
 });
