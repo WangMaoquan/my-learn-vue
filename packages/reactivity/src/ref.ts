@@ -169,6 +169,17 @@ class ObjectRefImpl<T extends object, K extends keyof T> {
   }
 }
 
+export type ToRef<T> = [T] extends [Ref] ? T : Ref<T>;
+
+export function toRef<T extends object, K extends keyof T>(
+  target: T,
+  key: K,
+  defaultValue: T[K],
+): ToRef<Exclude<T[K], undefined>>;
+export function toRef<T extends object, K extends keyof T>(
+  target: T,
+  key: K,
+): ToRef<T[K]>;
 export function toRef<T extends object, K extends keyof T>(
   target: T,
   key: K,
