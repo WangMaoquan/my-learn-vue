@@ -373,4 +373,11 @@ describe('reactivity/ref', () => {
     expect(dummyX).toBe(4);
     expect(dummyY).toBe(5);
   });
+
+  test('toRefs should warn on plain object', () => {
+    // toRefs 不能对没有响应式对象处理
+    toRefs({});
+    // @ts-ignore
+    expect(`toRefs() expects a reactive object`).toHaveBeenWarned();
+  });
 });

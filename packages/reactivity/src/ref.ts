@@ -14,6 +14,7 @@ import {
   toReactive,
   isReadonly,
   isReactive,
+  isProxy,
 } from './reactive';
 import type { ShallowReactiveMarker } from './reactive';
 
@@ -196,6 +197,11 @@ export function toRef<T extends object, K extends keyof T>(
 }
 
 export function toRefs<T extends object>(object: T) {
+  if (__DEV__ && !isProxy(object)) {
+    console.warn(
+      `toRefs() expects a reactive object but received a plain one.`,
+    );
+  }
   const res: any = {};
   for (const key in object) {
     res[key] = toRef(object, key);
