@@ -2,6 +2,7 @@ import { hasChanged, extend } from './../../shared/index';
 import { CollectionTypes } from './collectionHandlers';
 import {
   activeEffect,
+  canTrackEffect,
   ReactiveEffect,
   shouldTrack,
   trackEffects,
@@ -14,7 +15,7 @@ import {
   isReadonly,
   isReactive,
 } from './reactive';
-import type { ShallowReactiveMarker } from './reactive'
+import type { ShallowReactiveMarker } from './reactive';
 
 declare const RefSymbol: unique symbol;
 declare const ShallowRefMarker: unique symbol;
@@ -144,4 +145,8 @@ export type ShallowUnwrapRef<T> = {
  */
 export function proxyRefs<T extends object>(obj: T): ShallowUnwrapRef<T> {
   return isReactive(obj) ? obj : new Proxy(obj, proxyRefsHandlers);
+}
+
+export function triggerRef(ref: Ref) {
+  triggerEffects((ref as any).dep);
 }
