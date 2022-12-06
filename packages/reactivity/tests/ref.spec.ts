@@ -7,6 +7,7 @@ import {
   ref,
   shallowRef,
   toRef,
+  toRefs,
   triggerRef,
   unref,
 } from '../src/ref';
@@ -326,5 +327,50 @@ describe('reactivity/ref', () => {
 
     a.x = undefined;
     expect(x.value).toBe(1);
+  });
+
+  test('toRefs', () => {
+    /**
+     * toRef 用于将reactObjec的每一个key 用 toRef 包一层, 然后返回一个对象
+     * 我们只需要用一个新的对象 存储 热activeObject key 做key, toRef 后的值 做value 就行
+     */
+    const a = reactive({
+      x: 1,
+      y: 2,
+    });
+
+    const { x, y } = toRefs(a);
+
+    expect(isRef(x)).toBe(true);
+    expect(isRef(y)).toBe(true);
+    expect(x.value).toBe(1);
+    expect(y.value).toBe(2);
+
+    // source -> proxy
+    a.x = 2;
+    a.y = 3;
+    expect(x.value).toBe(2);
+    expect(y.value).toBe(3);
+
+    // proxy -> source
+    x.value = 3;
+    y.value = 4;
+    expect(a.x).toBe(3);
+    expect(a.y).toBe(4);
+
+    // reactivity
+    let dummyX, dummyY;
+    effect(() => {
+      dummyX = x.value;
+      dummyY = y.value;
+    });
+    expect(dummyX).toBe(x.value);
+    expect(dummyY).toBe(y.value);
+
+    // mutating source should trigger effect using the proxy refs
+    a.x = 4;
+    a.y = 5;
+    expect(dummyX).toBe(4);
+    expect(dummyY).toBe(5);
   });
 });

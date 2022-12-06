@@ -194,3 +194,11 @@ export function toRef<T extends object, K extends keyof T>(
   const value = target[key];
   return isRef(value) ? value : new ObjectRefImpl(target, key, defaultValue);
 }
+
+export function toRefs<T extends object>(object: T) {
+  const res: any = {};
+  for (const key in object) {
+    res[key] = toRef(object, key);
+  }
+  return res;
+}
