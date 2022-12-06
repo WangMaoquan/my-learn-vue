@@ -196,7 +196,11 @@ export function toRef<T extends object, K extends keyof T>(
   return isRef(value) ? value : new ObjectRefImpl(target, key, defaultValue);
 }
 
-export function toRefs<T extends object>(object: T) {
+export type ToRefs<T = any> = {
+  [K in keyof T]: ToRef<T[K]>;
+};
+
+export function toRefs<T extends object>(object: T): ToRefs<T> {
   if (__DEV__ && !isProxy(object)) {
     console.warn(
       `toRefs() expects a reactive object but received a plain one.`,
