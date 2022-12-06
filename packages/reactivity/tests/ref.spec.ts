@@ -6,6 +6,7 @@ import {
   Ref,
   ref,
   shallowRef,
+  toRef,
   triggerRef,
   unref,
 } from '../src/ref';
@@ -274,5 +275,43 @@ describe('reactivity/ref', () => {
     expect(isRef(1)).toBe(false);
     // an object that looks like a ref isn't necessarily a ref
     expect(isRef({ value: 0 })).toBe(false);
+  });
+
+  test('toRef', () => {
+    /**
+     * toRef 是干嘛的?
+     * 将一个reactiveOject的 指定key 转换成ref
+     * 接收的参数有两个 第一个是reactiveObject, 第二个是key
+     * 返回的是一个 ref
+     */
+    const a = reactive({
+      x: 1,
+    });
+    const x = toRef(a, 'x');
+    expect(isRef(x)).toBe(true);
+    expect(x.value).toBe(1);
+
+    // source -> proxy
+    a.x = 2;
+    expect(x.value).toBe(2);
+
+    // proxy -> source
+    x.value = 3;
+    expect(a.x).toBe(3);
+
+    // reactivity
+    let dummyX;
+    effect(() => {
+      dummyX = x.value;
+    });
+    expect(dummyX).toBe(x.value);
+
+    // mutating source should trigger effect using the proxy refs
+    a.x = 4;
+    expect(dummyX).toBe(4);
+
+    // should keep ref
+    const r = { x: ref(1) };
+    expect(toRef(r, 'x')).toBe(r.x);
   });
 });

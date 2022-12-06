@@ -150,3 +150,27 @@ export function proxyRefs<T extends object>(obj: T): ShallowUnwrapRef<T> {
 export function triggerRef(ref: Ref) {
   triggerEffects((ref as any).dep);
 }
+
+class ObjectRefImpl<T extends object, K extends keyof T> {
+  private __v_isRef = true; // 通过isRef
+  constructor(private _object: T, private _key: K) {}
+
+  get value() {
+    return this._object[this._key];
+  }
+
+  set value(newValue) {
+    this._object[this._key] = newValue;
+  }
+}
+
+export function toRef<T extends object, K extends keyof T>(target: T, key: K) {
+  // 这样写 是没办法 实现 修改reactive key的值 对应toRef 生成的ref.value 更新的
+  // 原有的RefImpl 不符合我们的需求
+  // 所以 我们可以新建一个 class 然后当访问 value 时返回 this.[key] 触发修改时 this.object[key] = newValue, 通过this.object 来触发proxy 的代理
+  // return new RefImpl(target[key]);
+
+  // 如果 target.key 已经是一个ref 我们是不需要 去new ObjectRefImpl的
+  const value = target[key];
+  return isRef(value) ? value : new ObjectRefImpl(target, key);
+}
