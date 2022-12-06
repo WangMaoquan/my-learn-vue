@@ -1,4 +1,4 @@
-import { hasChanged, extend } from './../../shared/index';
+import { hasChanged, extend, isArray } from './../../shared/index';
 import { CollectionTypes } from './collectionHandlers';
 import {
   activeEffect,
@@ -202,7 +202,8 @@ export function toRefs<T extends object>(object: T) {
       `toRefs() expects a reactive object but received a plain one.`,
     );
   }
-  const res: any = {};
+  // 传入的是数组 就判断一下
+  const res: any = isArray(object) ? new Array() : {};
   for (const key in object) {
     res[key] = toRef(object, key);
   }

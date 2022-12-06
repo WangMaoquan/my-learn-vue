@@ -380,4 +380,23 @@ describe('reactivity/ref', () => {
     // @ts-ignore
     expect(`toRefs() expects a reactive object`).toHaveBeenWarned();
   });
+
+  test('toRefs should warn on plain array', () => {
+    toRefs([]);
+    // @ts-ignore
+    expect(`toRefs() expects a reactive object`).toHaveBeenWarned();
+  });
+
+  test('toRefs reactive array', () => {
+    const arr = reactive(['a', 'b', 'c']);
+    const refs = toRefs(arr);
+
+    expect(Array.isArray(refs)).toBe(true);
+
+    refs[0].value = '1';
+    expect(arr[0]).toBe('1');
+
+    arr[1] = '2';
+    expect(refs[1].value).toBe('2');
+  });
 });
