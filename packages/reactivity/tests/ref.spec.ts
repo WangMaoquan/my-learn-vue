@@ -1,5 +1,11 @@
 import { effect } from '../src/effect';
-import { isReactive, isShallow, reactive } from '../src/reactive';
+import {
+  isReactive,
+  isShallow,
+  reactive,
+  readonly,
+  shallowReactive,
+} from '../src/reactive';
 import {
   customRef,
   isRef,
@@ -434,5 +440,43 @@ describe('reactivity/ref', () => {
 
     _trigger!();
     expect(dummy).toBe(2);
+  });
+
+  test('should not trigger when setting value to same proxy', () => {
+    const obj = reactive({ count: 0 });
+
+    const a = ref(obj);
+    const spy1 = jest.fn(() => a.value);
+
+    effect(spy1);
+
+    a.value = obj;
+    expect(spy1).toBeCalledTimes(1);
+
+    const b = shallowRef(obj);
+    const spy2 = jest.fn(() => b.value);
+
+    effect(spy2);
+
+    b.value = obj;
+    expect(spy2).toBeCalledTimes(1);
+  });
+
+  test('ref should preserve value shallow/readonly-ness', () => {
+    const original = {};
+    const r = reactive(original);
+    const s = shallowReactive(original);
+    const rr = readonly(original);
+    const a = ref(original);
+
+    expect(a.value).toBe(r);
+
+    a.value = s;
+    expect(a.value).toBe(s);
+    expect(a.value).not.toBe(r);
+
+    a.value = rr;
+    expect(a.value).toBe(rr);
+    expect(a.value).not.toBe(r);
   });
 });
