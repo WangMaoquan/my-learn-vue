@@ -1,6 +1,7 @@
 import { effect } from '../src/effect';
 import { isReactive, isShallow, reactive } from '../src/reactive';
 import {
+  customRef,
   isRef,
   proxyRefs,
   Ref,
@@ -398,5 +399,40 @@ describe('reactivity/ref', () => {
 
     arr[1] = '2';
     expect(refs[1].value).toBe('2');
+  });
+
+  test('customRef', () => {
+    /**
+     * customRef 功能是 传入一个方法 返回一个对象
+     * 传入的方法有两个可用的参数, 可用于自定义 的去触发收集依赖,派发更新
+     */
+    let value = 1;
+    let _trigger: () => void;
+
+    const custom = customRef((track, trigger) => ({
+      get() {
+        track();
+        return value;
+      },
+      set(newValue: number) {
+        value = newValue;
+        _trigger = trigger;
+      },
+    }));
+
+    expect(isRef(custom)).toBe(true);
+
+    let dummy;
+    effect(() => {
+      dummy = custom.value;
+    });
+    expect(dummy).toBe(1);
+
+    custom.value = 2;
+    // should not trigger yet
+    expect(dummy).toBe(1);
+
+    _trigger!();
+    expect(dummy).toBe(2);
   });
 });

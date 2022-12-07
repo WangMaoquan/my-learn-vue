@@ -213,3 +213,45 @@ export function toRefs<T extends object>(object: T): ToRefs<T> {
   }
   return res;
 }
+
+export type CustomRefFactory<T> = (
+  track: () => void,
+  trigger: () => void,
+) => {
+  get: () => T;
+  set: (value: T) => void;
+};
+
+class CustomRefImpl<T> {
+  public dep: Set<ReactiveEffect> = new Set();
+  _get: () => T;
+  _set: (value: T) => void;
+  __v_isRef = true;
+  constructor(factory: CustomRefFactory<T>) {
+    /**
+     * 主要的实现 构造函数里面传入 内部的 触发依赖/ 派发更新的方法
+     */
+    const { get, set } = factory(
+      () => {
+        if (canTrackEffect()) {
+          trackEffects(this.dep);
+        }
+      },
+      () => triggerEffects(this.dep),
+    );
+    this._get = get;
+    this._set = set;
+  }
+
+  get value() {
+    return this._get();
+  }
+
+  set value(newValue) {
+    this._set(newValue);
+  }
+}
+
+export function customRef<T>(factory: CustomRefFactory<T>) {
+  return new CustomRefImpl(factory);
+}
