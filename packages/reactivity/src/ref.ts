@@ -32,11 +32,11 @@ export interface Ref<T = any> {
 }
 
 class RefImpl<T> {
-  public dep: Set<ReactiveEffect> = new Set();
+  private dep: Set<ReactiveEffect> = new Set();
   private _value: T;
   private _rawValue: T;
-  public readonly __v_isRef = true;
-  constructor(value: T, public __v_isShallow = false) {
+  private readonly __v_isRef = true;
+  constructor(value: T, private __v_isShallow = false) {
     // 判断value 是不是ref 再处理
     // 之前没有做这个处理 导致 typeof (ref(ref(1)).value + 1) 为 string
     this._rawValue = __v_isShallow
@@ -223,10 +223,10 @@ export type CustomRefFactory<T> = (
 };
 
 class CustomRefImpl<T> {
-  public dep: Set<ReactiveEffect> = new Set();
-  _get: () => T;
-  _set: (value: T) => void;
-  __v_isRef = true;
+  private dep: Set<ReactiveEffect> = new Set();
+  private _get: () => T;
+  private _set: (value: T) => void;
+  private __v_isRef = true;
   constructor(factory: CustomRefFactory<T>) {
     /**
      * 主要的实现 构造函数里面传入 内部的 触发依赖/ 派发更新的方法
