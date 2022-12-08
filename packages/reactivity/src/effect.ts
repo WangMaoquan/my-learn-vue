@@ -129,8 +129,8 @@ export const trackEffects = (dep: Set<ReactiveEffect>) => {
 };
 
 export const canTrackEffect = () => {
-  return shouldTrack && activeEffect
-}
+  return shouldTrack && activeEffect;
+};
 
 /**
  * 触发依赖更新的方法
@@ -154,24 +154,10 @@ export const trigger = (
   // 收集的 deps
   let deps: (Set<ReactiveEffect> | undefined)[] = [];
   deps.push(depsMap.get(key));
-  // const effects: ReactiveEffect[] = [];
-  // for (const dep of deps) {
-  //   if (dep) {
-  //     effects.push(...dep);
-  //   }
-  // }
-  // // 触发依赖
-  // effects.forEach((effect) => {
-  //   if (effect.scheduler) {
-  //     effect.scheduler();
-  //   } else {
-  //     effect.run();
-  //   }
-  // });
 
   if (deps.length === 1) {
     if (deps[0]) {
-      triggerEffects(deps[0])
+      triggerEffects(deps[0]);
     }
   } else {
     const effects: ReactiveEffect[] = [];
