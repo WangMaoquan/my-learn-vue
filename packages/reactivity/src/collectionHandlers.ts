@@ -5,7 +5,7 @@ import {
   hasOwn,
   toRawType,
 } from '../../shared';
-import { track, trigger } from './effect';
+import { ITERATE_KEY, track, trigger } from './effect';
 import { TrackOpTypes, TriggerOpTypes } from './operations';
 import {
   ReactiveFlags,
@@ -161,6 +161,12 @@ function deleteEntry(this: CollectionTypes, key: unknown) {
   return result;
 }
 
+function size(target: CollectionTypes, isReadonly = false) {
+  target = toRaw(target);
+  !isReadonly && track(target, ITERATE_KEY);
+  return Reflect.get(target, 'size', target);
+}
+
 // readonly 的set / add / delete /clear  都只需要给出警告的 只是处理类型不同而已
 function createReadonlyMethod(type: TriggerOpTypes) {
   return function (this: CollectionTypes, ...args: unknown[]) {
@@ -230,6 +236,9 @@ const createInstrumentations = () => {
     get(this: MapTypes, key: unknown) {
       return get(this, key);
     },
+    get size() {
+      return size(this as unknown as IterableCollections);
+    },
     set,
     has,
     add,
@@ -239,6 +248,9 @@ const createInstrumentations = () => {
   const shallowInstrumentions: Record<string, Function> = {
     get(this: MapTypes, key: unknown) {
       return get(this, key, false, true);
+    },
+    get size() {
+      return size(this as unknown as IterableCollections);
     },
     set,
     has,
@@ -250,6 +262,9 @@ const createInstrumentations = () => {
     get(this: MapTypes, key: unknown) {
       return get(this, key, true, false);
     },
+    get size() {
+      return size(this as unknown as IterableCollections, true);
+    },
     set: createReadonlyMethod(TriggerOpTypes.SET),
     has(this: MapTypes, key: unknown) {
       return has.call(this, key, true);
@@ -259,18 +274,21 @@ const createInstrumentations = () => {
     clear: createReadonlyMethod(TriggerOpTypes.CLEAR),
   };
 
-  const shallowReadonlyInstrumentions: Record<string, Function> = extend(
-    {},
-    readonlyInstrumentions,
-    {
-      get(this: MapTypes, key: unknown) {
-        return get(this, key, true, true);
-      },
-      has(this: MapTypes, key: unknown) {
-        return has.call(this, key, true);
-      },
+  const shallowReadonlyInstrumentions: Record<string, Function> = {
+    get(this: MapTypes, key: unknown) {
+      return get(this, key, true, true);
     },
-  );
+    has(this: MapTypes, key: unknown) {
+      return has.call(this, key, true);
+    },
+    get size() {
+      return size(this as unknown as IterableCollections, true);
+    },
+    set: createReadonlyMethod(TriggerOpTypes.SET),
+    add: createReadonlyMethod(TriggerOpTypes.ADD),
+    delete: createReadonlyMethod(TriggerOpTypes.DELETE),
+    clear: createReadonlyMethod(TriggerOpTypes.CLEAR),
+  };
 
   return [
     mutableInstrumentions,
