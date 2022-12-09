@@ -15,7 +15,8 @@ export const isIntegerKey = (key: unknown) =>
 export const isObject = (val: unknown): val is Record<any, any> =>
   val !== null && typeof val === 'object';
 
-export const isFunction = (val: unknown): val is Function => typeof val === 'function'
+export const isFunction = (val: unknown): val is Function =>
+  typeof val === 'function';
 
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 export const hasOwn = (
@@ -28,27 +29,33 @@ export const hasChanged = (value: any, oldValue: any): boolean =>
 
 export const extend = Object.assign;
 
-export const objectToString = Object.prototype.toString
+export const objectToString = Object.prototype.toString;
 export const toTypeString = (value: unknown): string =>
-  objectToString.call(value)
-export const toRawType = (value: unknown) => toTypeString(value).slice(8, -1)
+  objectToString.call(value);
+export const toRawType = (value: unknown) => toTypeString(value).slice(8, -1);
+
+export const isMap = (value: unknown): value is Map<any, any> =>
+  toTypeString(value) === '[object Map]';
+
+export const isSet = (value: unknown): value is Set<any> =>
+  toTypeString(value) === '[object Set]';
 
 export const def = (obj: object, key: string | symbol, value: unknown) => {
   Object.defineProperty(obj, key, {
     configurable: true,
     enumerable: false,
-    value
-  })
-}
+    value,
+  });
+};
 
 const cacheStringFunction = <T extends (str: string) => string>(fn: T): T => {
   const cache: Record<string, string> = Object.create(null);
   return ((str: string) => {
     const hit = cache[str];
-    return hit || (cache[str] = fn(str))
-  }) as T
-}
+    return hit || (cache[str] = fn(str));
+  }) as T;
+};
 
 export const capitalize = cacheStringFunction(
-  (str: string) => str.charAt(0).toUpperCase() + str.slice(1)
-)
+  (str: string) => str.charAt(0).toUpperCase() + str.slice(1),
+);
