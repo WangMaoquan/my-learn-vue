@@ -1,5 +1,13 @@
-import { makeMap } from "../../shared/makeMap"
-import { hasChanged, hasOwn, isArray, isIntegerKey,extend, isObject, isSymbol } from '../../shared';
+import { makeMap } from '../../shared/makeMap';
+import {
+  hasChanged,
+  hasOwn,
+  isArray,
+  isIntegerKey,
+  extend,
+  isObject,
+  isSymbol,
+} from '../../shared';
 import { warn } from '../../shared/warning';
 import { track, trigger } from './effect';
 import {
@@ -17,14 +25,41 @@ import {
 } from './reactive';
 import { isRef } from './ref';
 
-const isNonTrackableKeys = /*#__PURE__*/ makeMap(`__proto__,__v_isRef,__isVue`)
+const isNonTrackableKeys = /*#__PURE__*/ makeMap(`__proto__,__v_isRef,__isVue`);
 
 const builtInSymbols = new Set(
   Object.getOwnPropertyNames(Symbol)
-    .filter(key => key !== 'arguments' && key !== 'caller')
-    .map(key => (Symbol as any)[key])
-    .filter(isSymbol)
-)
+    .filter((key) => key !== 'arguments' && key !== 'caller')
+    .map((key) => (Symbol as any)[key])
+    .filter(isSymbol),
+);
+
+/**
+ * 那些方法会修改数组的length
+ *
+ * pop shift unshift push splice
+ */
+const createArrayInstrumentations = () => {
+  const changeArrayLengthFunc = [
+    'pop',
+    'shift',
+    'unshift',
+    'push',
+    'splice',
+  ] as const;
+  const instrumentations: Record<string, Function> = {};
+
+  changeArrayLengthFunc.forEach((key) => {
+    instrumentations[key] = function (this: unknown[], ...args: unknown[]) {
+      const res = (toRaw(this) as any)[key].apply(this, args);
+      return res;
+    };
+  });
+
+  return instrumentations;
+};
+
+const arrayInstrumentations = createArrayInstrumentations();
 
 /**
  * 创建 proxy get 的工厂函数
@@ -53,6 +88,15 @@ const createGetter = (isReadonly = false, shallow = false) => {
     ) {
       return target;
     }
+
+    const targetIsArray = isArray(target);
+
+    if (!isReadonly) {
+      if (targetIsArray && hasOwn(arrayInstrumentations, key)) {
+        return Reflect.get(arrayInstrumentations, key, receiver);
+      }
+    }
+
     // todo 针对数组 非readonly 数组的处理
     const res = Reflect.get(target, key, receiver);
 
@@ -72,7 +116,7 @@ const createGetter = (isReadonly = false, shallow = false) => {
 
     // todo针对传入进来target 是 ref
     if (isRef(res)) {
-      return isArray(target) && isIntegerKey(key) ? res : res.value
+      return isArray(target) && isIntegerKey(key) ? res : res.value;
     }
 
     // 这里就是处理用到的时候才会去代理
@@ -102,12 +146,12 @@ const createSetter = (shallow = false) => {
 
     if (!shallow) {
       if (!isShallow(value) && !isReadonly(value)) {
-        oldValue = toRaw(oldValue)
-        value = toRaw(value)
+        oldValue = toRaw(oldValue);
+        value = toRaw(value);
       }
       if (!isArray(target) && isRef(oldValue) && !isRef(value)) {
-        oldValue.value = value
-        return true
+        oldValue.value = value;
+        return true;
       }
     }
 
@@ -126,7 +170,6 @@ const createSetter = (shallow = false) => {
 
     // todo  deal ref
 
-
     return result;
   };
 };
@@ -138,27 +181,27 @@ const createSetter = (shallow = false) => {
  * 判断key是否是 内置或者自定义的symbol key
  * @param target object
  * @param key 判断的key
- * @returns 
+ * @returns
  */
 function has(target: object, key: string | symbol): boolean {
-  const result = Reflect.has(target, key)
+  const result = Reflect.has(target, key);
   if (!isSymbol(key) || !builtInSymbols.has(key)) {
     // 不是自定义的或者内置的symbol key 就触发
-    track(target, key)
+    track(target, key);
   }
-  return result
+  return result;
 }
 
 /**
  * 这个key 必须是这个对象自己的, 删除原型链上的key 是不需要trigger的
- * @param target 
- * @param key 
+ * @param target
+ * @param key
  */
-function deleteProperty(target: object, key: symbol | string) : boolean {
+function deleteProperty(target: object, key: symbol | string): boolean {
   const hadKey = hasOwn(target, key);
   const result = Reflect.deleteProperty(target, key);
   if (hadKey && result) {
-    trigger(target, key, undefined, (target as any)[key])
+    trigger(target, key, undefined, (target as any)[key]);
   }
   return result;
 }
@@ -166,7 +209,7 @@ function deleteProperty(target: object, key: symbol | string) : boolean {
 function ownKeys(target: object): (string | symbol)[] {
   // 触发 ownkeys Object.keys 拿不到key 的所以我们自定义一个
   track(target, 'ownKey');
-  return Reflect.ownKeys(target)
+  return Reflect.ownKeys(target);
 }
 
 // base
@@ -188,7 +231,7 @@ export const mutableHandlers: ProxyHandler<object> = {
   set,
   has,
   ownKeys,
-  deleteProperty
+  deleteProperty,
 };
 
 export const readonlyHandlers: ProxyHandler<object> = {
