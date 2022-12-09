@@ -1,9 +1,11 @@
-import { extend, isArray } from '../../shared';
+import { extend, isArray, isMap, isSet } from '../../shared';
 
 type KeyToDepMap = Map<any, Set<ReactiveEffect<any>>>;
 const targetMap = new WeakMap<any, KeyToDepMap>();
 export let activeEffect: ReactiveEffect | undefined;
 export let shouldTrack = true;
+
+export const ITERATE_KEY = 'ITERATE_KEY';
 
 export type EffectScheduler = (...args: any[]) => any;
 
@@ -154,6 +156,22 @@ export const trigger = (
   // 收集的 deps
   let deps: (Set<ReactiveEffect> | undefined)[] = [];
   deps.push(depsMap.get(key));
+  /**
+   * 很明显这里收集的依赖是不全的 比如 对于通过 (map/set).size 或者 array.length 收集的依赖 只是通过key 是获取不到
+   * 所以就会导致 通过(map/set).size 或者 array.length 的effect 无法执行 即 达不到我们想要的效果
+   * 所以我们还需要特殊处理
+   * todo 明天搞!!!
+   */
+
+  // 判断target 是否是 map / set
+  if (isMap(target) || isSet(target)) {
+    deps.push(depsMap.get(ITERATE_KEY));
+  }
+
+  // 数组需要把通过 length 收集的依赖 push
+  if (isArray(target)) {
+    deps.push(depsMap.get('length'));
+  }
 
   if (deps.length === 1) {
     if (deps[0]) {
