@@ -111,4 +111,23 @@ describe('shallowReactive', () => {
     expect(r.shallow).toBe(shallow);
     expect(r.deep).toBe(deep);
   });
+
+  test('shallowReactive array length', () => {
+    const target = shallowReactive<number[]>([]);
+    let flagLength: number | undefined = undefined;
+    effect(() => {
+      flagLength = target.length;
+    });
+    expect(flagLength).toBe(0);
+    target.push(1);
+    expect(flagLength).toBe(1);
+    target.pop();
+    expect(flagLength).toBe(0);
+    target.unshift(...[1, 2]);
+    expect(flagLength).toBe(2);
+    target.shift();
+    expect(flagLength).toBe(1);
+    target.splice(0, 1);
+    expect(flagLength).toBe(0);
+  });
 });

@@ -1,8 +1,15 @@
-import { isProxy, isReactive, isReadonly, markRaw, reactive, toRaw } from './../src/reactive';
+import {
+  isProxy,
+  isReactive,
+  isReadonly,
+  markRaw,
+  reactive,
+  toRaw,
+} from './../src/reactive';
 import { readonly } from '../src/reactive';
 import { effect } from '../src/effect';
 import { ref } from '../src/ref';
-import { computed } from "../src/computed"
+import { computed } from '../src/computed';
 
 type Writable<T> = { -readonly [P in keyof T]: T[P] };
 describe('readonly', () => {
@@ -331,156 +338,156 @@ describe('readonly', () => {
   });
 
   test('calling reactive on an readonly should return readonly', () => {
-    const a = readonly({})
-    const b = reactive(a)
-    expect(isReadonly(b)).toBe(true)
+    const a = readonly({});
+    const b = reactive(a);
+    expect(isReadonly(b)).toBe(true);
     // should point to same original
-    expect(toRaw(a)).toBe(toRaw(b))
-  })
+    expect(toRaw(a)).toBe(toRaw(b));
+  });
 
   test('readonly should track and trigger if wrapping reactive original', () => {
-    const a = reactive({ n: 1 })
-    const b = readonly(a)
+    const a = reactive({ n: 1 });
+    const b = readonly(a);
     // should return true since it's wrapping a reactive source
-    expect(isReactive(b)).toBe(true)
+    expect(isReactive(b)).toBe(true);
 
-    let dummy
+    let dummy;
     effect(() => {
-      dummy = b.n
-    })
-    expect(dummy).toBe(1)
-    a.n++
-    expect(b.n).toBe(2)
-    expect(dummy).toBe(2)
-  })
+      dummy = b.n;
+    });
+    expect(dummy).toBe(1);
+    a.n++;
+    expect(b.n).toBe(2);
+    expect(dummy).toBe(2);
+  });
 
   test('readonly collection should not track', () => {
-    const map = new Map()
-    map.set('foo', 1)
+    const map = new Map();
+    map.set('foo', 1);
 
-    const reMap = reactive(map)
-    const roMap = readonly(map)
+    const reMap = reactive(map);
+    const roMap = readonly(map);
 
-    let dummy
+    let dummy;
     effect(() => {
-      dummy = roMap.get('foo')
-    })
-    expect(dummy).toBe(1)
-    reMap.set('foo', 2)
-    expect(roMap.get('foo')).toBe(2)
+      dummy = roMap.get('foo');
+    });
+    expect(dummy).toBe(1);
+    reMap.set('foo', 2);
+    expect(roMap.get('foo')).toBe(2);
     // should not trigger
-    expect(dummy).toBe(1)
-  })
+    expect(dummy).toBe(1);
+  });
 
   test('readonly array should not track', () => {
-    const arr = [1]
-    const roArr = readonly(arr)
+    const arr = [1];
+    const roArr = readonly(arr);
 
     const eff = effect(() => {
-      roArr.includes(2)
-    })
-    expect(eff.effect.deps.length).toBe(0)
-  })
+      roArr.includes(2);
+    });
+    expect(eff.effect.deps.length).toBe(0);
+  });
 
   test('readonly should track and trigger if wrapping reactive original (collection)', () => {
-    const a = reactive(new Map())
-    const b = readonly(a)
+    const a = reactive(new Map());
+    const b = readonly(a);
     // should return true since it's wrapping a reactive source
-    expect(isReactive(b)).toBe(true)
+    expect(isReactive(b)).toBe(true);
 
-    a.set('foo', 1)
+    a.set('foo', 1);
 
-    let dummy
+    let dummy;
     effect(() => {
-      dummy = b.get('foo')
-    })
-    expect(dummy).toBe(1)
-    a.set('foo', 2)
-    expect(b.get('foo')).toBe(2)
-    expect(dummy).toBe(2)
-  })
+      dummy = b.get('foo');
+    });
+    expect(dummy).toBe(1);
+    a.set('foo', 2);
+    expect(b.get('foo')).toBe(2);
+    expect(dummy).toBe(2);
+  });
 
   test('wrapping already wrapped value should return same Proxy', () => {
-    const original = { foo: 1 }
-    const wrapped = readonly(original)
-    const wrapped2 = readonly(wrapped)
-    expect(wrapped2).toBe(wrapped)
-  })
+    const original = { foo: 1 };
+    const wrapped = readonly(original);
+    const wrapped2 = readonly(wrapped);
+    expect(wrapped2).toBe(wrapped);
+  });
 
   test('markRaw', () => {
     const obj = readonly({
       foo: { a: 1 },
-      bar: markRaw({ b: 2 })
-    })
-    expect(isReadonly(obj.foo)).toBe(true)
-    expect(isReactive(obj.bar)).toBe(false)
-  })
+      bar: markRaw({ b: 2 }),
+    });
+    expect(isReadonly(obj.foo)).toBe(true);
+    expect(isReactive(obj.bar)).toBe(false);
+  });
 
   test('should make ref readonly', () => {
-    const n = readonly(ref(1))
+    const n = readonly(ref(1));
     // @ts-expect-error
-    n.value = 2
-    expect(n.value).toBe(1)
+    n.value = 2;
+    expect(n.value).toBe(1);
     expect(
-      `Set operation on key "value" failed: target is readonly.`
+      `Set operation on key "value" failed: target is readonly.`,
       // @ts-ignore
-    ).toHaveBeenWarned()
-  })
+    ).toHaveBeenWarned();
+  });
 
   test('calling readonly on computed should allow computed to set its private properties', () => {
-    const r = ref<boolean>(false)
-    const c = computed(() => r.value)
-    const rC = readonly(c)
+    const r = ref<boolean>(false);
+    const c = computed(() => r.value);
+    const rC = readonly(c);
 
-    r.value = true
+    r.value = true;
 
-    expect(rC.value).toBe(true)
+    expect(rC.value).toBe(true);
     expect(
-      'Set operation on key "_dirty" failed: target is readonly.'
+      'Set operation on key "_dirty" failed: target is readonly.',
       // @ts-ignore
-    ).not.toHaveBeenWarned()
+    ).not.toHaveBeenWarned();
     // @ts-expect-error - non-existent property
-    rC.randomProperty = true
+    rC.randomProperty = true;
 
     expect(
-      'Set operation on key "randomProperty" failed: target is readonly.'
+      'Set operation on key "randomProperty" failed: target is readonly.',
       //@ts-ignore
-    ).toHaveBeenWarned()
-  })
+    ).toHaveBeenWarned();
+  });
 
   test('setting a readonly object as a property of a reactive object should retain readonly proxy', () => {
-    const r = readonly({})
-    const rr = reactive({}) as any
-    rr.foo = r
-    expect(rr.foo).toBe(r)
-    expect(isReadonly(rr.foo)).toBe(true)
-  })
+    const r = readonly({});
+    const rr = reactive({}) as any;
+    rr.foo = r;
+    expect(rr.foo).toBe(r);
+    expect(isReadonly(rr.foo)).toBe(true);
+  });
 
   test('attempting to write plain value to a readonly ref nested in a reactive object should fail', () => {
-    const r = ref(false)
-    const ror = readonly(r)
-    const obj = reactive({ ror })
+    const r = ref(false);
+    const ror = readonly(r);
+    const obj = reactive({ ror });
     expect(() => {
-      obj.ror = true
-    }).toThrow()
-    expect(obj.ror).toBe(false)
-  })
+      obj.ror = true;
+    }).toThrow();
+    expect(obj.ror).toBe(false);
+  });
 
   test('replacing a readonly ref nested in a reactive object with a new ref', () => {
-    const r = ref(false)
-    const ror = readonly(r)
-    const obj = reactive({ ror })
-    obj.ror = ref(true) as unknown as boolean
-    expect(obj.ror).toBe(true)
-    expect(toRaw(obj).ror).not.toBe(ror) // ref successfully replaced
-  })
+    const r = ref(false);
+    const ror = readonly(r);
+    const obj = reactive({ ror });
+    obj.ror = ref(true) as unknown as boolean;
+    expect(obj.ror).toBe(true);
+    expect(toRaw(obj).ror).not.toBe(ror); // ref successfully replaced
+  });
 
   test('setting readonly object to writable nested ref', () => {
-    const r = ref<any>()
-    const obj = reactive({ r })
-    const ro = readonly({})
-    obj.r = ro
-    expect(obj.r).toBe(ro)
-    expect(r.value).toBe(ro)
-  })
+    const r = ref<any>();
+    const obj = reactive({ r });
+    const ro = readonly({});
+    obj.r = ro;
+    expect(obj.r).toBe(ro);
+    expect(r.value).toBe(ro);
+  });
 });
