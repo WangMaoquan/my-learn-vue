@@ -4,15 +4,15 @@
 
 #### reactive.ts
 
-[] reactive
-[] readonly
-[] shallowReactive
-[] shallowReadonly
-[] isReactive
-[] isReadonly
-[] isShallow
-[] isProxy
-[] toRaw
-[] toReactive
-[] toReadonly
-[] markRaw
+- [x] reactive
+- [x] readonly
+- [x] shallowReactive
+- [x] shallowReadonly
+- [x] isReactive
+- [x] isReadonly
+- [x] isShallow
+- [x] isProxy
+- [x] toRaw
+- [x] toReactive
+- [x] toReadonly
+- [x] markRaw
