@@ -7,6 +7,14 @@ export let shouldTrack = true;
 
 export const ITERATE_KEY = 'ITERATE_KEY';
 
+export function pauseTracking() {
+  shouldTrack = false;
+}
+
+export function enableTracking() {
+  shouldTrack = true;
+}
+
 export type EffectScheduler = (...args: any[]) => any;
 
 export interface ReactiveEffectOptions {

@@ -9,7 +9,14 @@ import {
   isSymbol,
 } from '../../shared';
 import { warn } from '../../shared/warning';
-import { ITERATE_KEY, track, trigger } from './effect';
+import {
+  ITERATE_KEY,
+  track,
+  trigger,
+  shouldTrack,
+  pauseTracking,
+  enableTracking,
+} from './effect';
 import {
   ReactiveFlags,
   reactiveMap,
@@ -51,7 +58,9 @@ const createArrayInstrumentations = () => {
 
   changeArrayLengthFunc.forEach((key) => {
     instrumentations[key] = function (this: unknown[], ...args: unknown[]) {
+      pauseTracking();
       const res = (toRaw(this) as any)[key].apply(this, args);
+      enableTracking();
       return res;
     };
   });
