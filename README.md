@@ -1,6 +1,8 @@
 测试用例都是看的官方的
 
-### 完成的功能
+## 完成的功能
+
+### reactivity
 
 #### reactive.ts
 
@@ -28,3 +30,7 @@
 - [x] toRef
 - [x] toRefs
 - [x] customRef
+
+#### computed.ts
+
+- [x] computed
