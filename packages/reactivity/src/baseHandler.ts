@@ -9,7 +9,7 @@ import {
   isSymbol,
 } from '../../shared';
 import { warn } from '../../shared/warning';
-import { track, trigger } from './effect';
+import { ITERATE_KEY, track, trigger } from './effect';
 import {
   ReactiveFlags,
   reactiveMap,
@@ -208,7 +208,7 @@ function deleteProperty(target: object, key: symbol | string): boolean {
 
 function ownKeys(target: object): (string | symbol)[] {
   // 触发 ownkeys Object.keys 拿不到key 的所以我们自定义一个
-  track(target, 'ownKey');
+  track(target, isArray(target) ? 'length' : ITERATE_KEY);
   return Reflect.ownKeys(target);
 }
 

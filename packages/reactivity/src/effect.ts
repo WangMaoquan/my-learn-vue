@@ -1,4 +1,4 @@
-import { extend, isArray, isMap, isSet } from '../../shared';
+import { extend, isArray, isMap, isObject, isSet } from '../../shared';
 
 type KeyToDepMap = Map<any, Set<ReactiveEffect<any>>>;
 const targetMap = new WeakMap<any, KeyToDepMap>();
@@ -164,7 +164,7 @@ export const trigger = (
    */
 
   // 判断target 是否是 map / set
-  if (isMap(target) || isSet(target)) {
+  if (isMap(target) || isSet(target) || isObject(target)) {
     deps.push(depsMap.get(ITERATE_KEY));
   }
 
