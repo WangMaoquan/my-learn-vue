@@ -100,14 +100,14 @@ const createGetter = (isReadonly = false, shallow = false) => {
     // todo 针对数组 非readonly 数组的处理
     const res = Reflect.get(target, key, receiver);
 
-    // 只要不是只读 就会收集依赖
-    if (!isReadonly) {
-      track(target, key);
-    }
-
     // 增加对symbol 的处理 没有这层处理的话 会访问不到symbol的, 当然如果下面的条件 也都没通过 也可以访问哈哈哈
     if (isSymbol(key) ? builtInSymbols.has(key) : isNonTrackableKeys(key)) {
       return res;
+    }
+
+    // 只要不是只读 就会收集依赖
+    if (!isReadonly) {
+      track(target, key);
     }
 
     if (shallow) {
