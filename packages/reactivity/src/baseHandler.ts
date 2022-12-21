@@ -162,10 +162,13 @@ const createSetter = (shallow = false) => {
         : hasOwn(target, key);
     const result = Reflect.set(target, key, value, receiver);
 
-    if (!hadKey) {
-      trigger(target, key, value);
-    } else if (hasChanged(value, oldValue)) {
-      trigger(target, key, value, oldValue);
+    // 这里判断 是否是继承来的
+    if (target === toRaw(receiver)) {
+      if (!hadKey) {
+        trigger(target, key, value);
+      } else if (hasChanged(value, oldValue)) {
+        trigger(target, key, value, oldValue);
+      }
     }
 
     // todo  deal ref
