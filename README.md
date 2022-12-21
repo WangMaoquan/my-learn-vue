@@ -16,3 +16,15 @@
 - [x] toReactive
 - [x] toReadonly
 - [x] markRaw
+
+### ref.ts
+
+- [x] ref
+- [x] shallowRef
+- [x] isRef
+- [x] unref
+- [x] proxyRefs
+- [x] triggerRef
+- [x] toRef
+- [x] toRefs
+- [x] customRef
