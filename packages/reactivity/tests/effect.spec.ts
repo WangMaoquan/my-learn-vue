@@ -1,5 +1,6 @@
 import { effect, ReactiveEffectRunner, stop } from '../src/effect';
 import { reactive, toRaw } from '../src/reactive';
+import { ref } from '../src/ref';
 
 describe('effect', () => {
   // 1. effect 会执行一遍传入fn
@@ -864,5 +865,48 @@ describe('effect', () => {
     expect(dummy).toBe(1);
     obj.foo = 2;
     expect(dummy).toBe(2);
+  });
+
+  it('scheduler', () => {
+    let dummy;
+    let run: any;
+    const scheduler = jest.fn(() => {
+      run = runner;
+    });
+    const obj = reactive({ foo: 1 });
+    const runner = effect(
+      () => {
+        dummy = obj.foo;
+      },
+      { scheduler },
+    );
+    expect(scheduler).not.toHaveBeenCalled();
+    expect(dummy).toBe(1);
+    // should be called on first trigger
+    obj.foo++;
+    expect(scheduler).toHaveBeenCalledTimes(1);
+    // should not run yet
+    expect(dummy).toBe(1);
+    // manually run
+    run();
+    // should have run
+    expect(dummy).toBe(2);
+  });
+
+  it('stop', () => {
+    let dummy;
+    const obj = reactive({ prop: 1 });
+    const runner = effect(() => {
+      dummy = obj.prop;
+    });
+    obj.prop = 2;
+    expect(dummy).toBe(2);
+    stop(runner);
+    obj.prop = 3;
+    expect(dummy).toBe(2);
+
+    // stopped effect should still be manually callable
+    runner();
+    expect(dummy).toBe(3);
   });
 });
