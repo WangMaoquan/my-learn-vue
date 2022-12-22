@@ -1,6 +1,7 @@
 import { extend, isArray, isMap, isObject, isSet } from '../../shared';
+import { Dep, createDep, clearRestDep, initDeps } from './dep';
 
-type KeyToDepMap = Map<any, Set<ReactiveEffect<any>>>;
+type KeyToDepMap = Map<any, Dep>;
 const targetMap = new WeakMap<any, KeyToDepMap>();
 export let activeEffect: ReactiveEffect | undefined;
 export let shouldTrack = true;
@@ -32,7 +33,7 @@ export class ReactiveEffect<T = any> {
   active = true;
   onStop?: () => void;
   lazy?: boolean;
-  deps: Set<ReactiveEffect>[] = []; // 啥时候存 track的时候 收集依赖的时候就可以存了
+  deps: Dep[] = []; // 啥时候存 track的时候 收集依赖的时候就可以存了
   computed?: boolean;
   constructor(
     public fn: () => T,
@@ -45,10 +46,12 @@ export class ReactiveEffect<T = any> {
     try {
       activeEffect = this;
       shouldTrack = true;
+      initDeps(this);
       return this.fn();
     } finally {
       shouldTrack = false;
       activeEffect = undefined;
+      clearRestDep(this);
     }
   }
   stop() {
@@ -125,14 +128,15 @@ export const track = (target: object, key: unknown) => {
     }
     let dep = depsMap.get(key);
     if (!dep) {
-      dep = new Set();
+      dep = createDep();
       depsMap.set(key, dep);
     }
     trackEffects(dep);
   }
 };
 
-export const trackEffects = (dep: Set<ReactiveEffect>) => {
+export const trackEffects = (dep: Dep) => {
+  dep.isRestDep = false;
   dep.add(activeEffect!);
   // 将effect 对应的依赖 存到 effect 的 deps上
   activeEffect!.deps.push(dep);
@@ -162,7 +166,7 @@ export const trigger = (
     return;
   }
   // 收集的 deps
-  let deps: (Set<ReactiveEffect> | undefined)[] = [];
+  let deps: (Dep | undefined)[] = [];
   deps.push(depsMap.get(key));
   /**
    * 很明显这里收集的依赖是不全的 比如 对于通过 (map/set).size 或者 array.length 收集的依赖 只是通过key 是获取不到
@@ -192,11 +196,11 @@ export const trigger = (
         effects.push(...dep);
       }
     }
-    triggerEffects(new Set(effects));
+    triggerEffects(createDep(effects));
   }
 };
 
-export const triggerEffects = (dep: Set<ReactiveEffect> | ReactiveEffect[]) => {
+export const triggerEffects = (dep: Dep | ReactiveEffect[]) => {
   const effects = isArray(dep) ? dep : [...dep];
   // 先执行 computed
   for (const effect of effects) {
