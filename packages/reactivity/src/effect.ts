@@ -35,6 +35,7 @@ export class ReactiveEffect<T = any> {
   lazy?: boolean;
   deps: Dep[] = []; // 啥时候存 track的时候 收集依赖的时候就可以存了
   computed?: boolean;
+  parent?: ReactiveEffect;
   constructor(
     public fn: () => T,
     public scheduler: EffectScheduler | null = null,
@@ -43,14 +44,17 @@ export class ReactiveEffect<T = any> {
     if (!this.active) {
       return this.fn();
     }
+    let lastShouldTrack = shouldTrack;
     try {
+      this.parent = activeEffect;
       activeEffect = this;
       shouldTrack = true;
       initDeps(this);
       return this.fn();
     } finally {
-      shouldTrack = false;
-      activeEffect = undefined;
+      activeEffect = this.parent;
+      shouldTrack = lastShouldTrack;
+      this.parent = undefined;
       clearRestDep(this);
     }
   }
