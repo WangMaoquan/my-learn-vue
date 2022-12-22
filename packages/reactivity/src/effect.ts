@@ -109,7 +109,9 @@ export const effect = <T = any>(
   if (options) {
     extend(_effect, options);
   }
-  _effect.run();
+  if (!options || !options.lazy) {
+    _effect.run();
+  }
   const runner = _effect.run.bind(_effect) as ReactiveEffectRunner;
   runner.effect = _effect;
   return runner;
