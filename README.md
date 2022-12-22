@@ -34,3 +34,16 @@
 #### computed.ts
 
 - [x] computed
+
+#### effect.ts
+
+- [x] effect
+- [x] track
+- [x] trackEffects
+- [x] canTrackEffect
+- [x] trigger
+- [x] triggerEffects
+- [x] triggerEffect
+- [] event onTrack
+- [] event onTrigger
+- [] event onStop
