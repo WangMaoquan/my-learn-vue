@@ -44,16 +44,22 @@ export class ReactiveEffect<T = any> {
     if (!this.active) {
       return this.fn();
     }
+    // 保存上次是否应该track的标记
     let lastShouldTrack = shouldTrack;
     try {
+      // 当前的parent 保存activeEffect
       this.parent = activeEffect;
+      // 重新赋值activeEffect
       activeEffect = this;
       shouldTrack = true;
       initDeps(this);
       return this.fn();
     } finally {
+      // 重置activeEffect
       activeEffect = this.parent;
+      // 重置shouldtrack
       shouldTrack = lastShouldTrack;
+      // 重置parent
       this.parent = undefined;
       clearRestDep(this);
     }
