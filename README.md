@@ -44,6 +44,6 @@
 - [x] trigger
 - [x] triggerEffects
 - [x] triggerEffect
-- [] event onTrack
-- [] event onTrigger
-- [] event onStop
+- [ ] event onTrack
+- [ ] event onTrigger
+- [ ] event onStop
