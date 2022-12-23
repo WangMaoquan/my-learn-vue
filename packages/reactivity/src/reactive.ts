@@ -1,16 +1,27 @@
-import { CollectionTypes, shallowCollectionHandlers, shallowReadonlyCollectionHandlers, mutableCollectionHandlers, readonlyCollectionHandlers } from './collectionHandlers';
-import { def, isObject, toRawType } from '../../shared';
-import { mutableHandlers, readonlyHandlers, shallowReactiveHandlers, shallowReadonlyHandlers } from './baseHandler';
+import {
+  CollectionTypes,
+  shallowCollectionHandlers,
+  shallowReadonlyCollectionHandlers,
+  mutableCollectionHandlers,
+  readonlyCollectionHandlers,
+} from './collectionHandlers';
+import { def, isObject, toRawType } from 'shared';
+import {
+  mutableHandlers,
+  readonlyHandlers,
+  shallowReactiveHandlers,
+  shallowReadonlyHandlers,
+} from './baseHandler';
 import { Ref, UnwrapRefSimple } from './ref';
 
-export const reactiveMap = new WeakMap<Target, any>()
-export const shallowReactiveMap = new WeakMap<Target, any>()
-export const readonlyMap = new WeakMap<Target, any>()
-export const shallowReadonlyMap = new WeakMap<Target, any>()
+export const reactiveMap = new WeakMap<Target, any>();
+export const shallowReactiveMap = new WeakMap<Target, any>();
+export const readonlyMap = new WeakMap<Target, any>();
+export const shallowReadonlyMap = new WeakMap<Target, any>();
 
 export declare const ShallowReactiveMarker: unique symbol;
 export type ShallowReactive<T = any> = {
-  [ShallowReactiveMarker]?: true
+  [ShallowReactiveMarker]?: true;
 } & T;
 
 export const enum ReactiveFlags {
@@ -22,38 +33,38 @@ export const enum ReactiveFlags {
 }
 
 export interface Target {
-  [ReactiveFlags.IS_REACTIVE]?: boolean
-  [ReactiveFlags.IS_READONLY]?: boolean
-  [ReactiveFlags.IS_SHALLOW]?: boolean
-  [ReactiveFlags.RAW]?: any
-  [ReactiveFlags.SKIP]?: boolean
+  [ReactiveFlags.IS_REACTIVE]?: boolean;
+  [ReactiveFlags.IS_READONLY]?: boolean;
+  [ReactiveFlags.IS_SHALLOW]?: boolean;
+  [ReactiveFlags.RAW]?: any;
+  [ReactiveFlags.SKIP]?: boolean;
 }
 
-enum TargetType  {
+enum TargetType {
   INVALID = 0, // 不需要被响应式的
   COMMON = 1, // 除开map/set/weakmap/weakset
-  COLLECTION = 2 // map/set/ weakmap/weakset
+  COLLECTION = 2, // map/set/ weakmap/weakset
 }
 
 function targetTypeMap(rawType: string) {
   switch (rawType) {
     case 'Object':
     case 'Array':
-      return TargetType.COMMON
+      return TargetType.COMMON;
     case 'Map':
     case 'Set':
     case 'WeakMap':
     case 'WeakSet':
-      return TargetType.COLLECTION
+      return TargetType.COLLECTION;
     default:
-      return TargetType.INVALID
+      return TargetType.INVALID;
   }
 }
 
 function getTargetType(value: Target) {
   return value[ReactiveFlags.SKIP] || !Object.isExtensible(value)
     ? TargetType.INVALID
-    : targetTypeMap(toRawType(value))
+    : targetTypeMap(toRawType(value));
 }
 
 // todo Map Set 的 代理方法
@@ -66,7 +77,7 @@ function getTargetType(value: Target) {
  * @param isReadonly 是否只读
  * @param baseHandlers 对应的proxy传入的handler 现在只有对象的
  * @param proxyMap 对应的代理map
- * @returns 
+ * @returns
  */
 const createReactiveObject = (
   target: Target,
@@ -88,7 +99,7 @@ const createReactiveObject = (
     target[ReactiveFlags.RAW] &&
     !(isReadonly && target[ReactiveFlags.IS_REACTIVE])
   ) {
-    return target
+    return target;
   }
 
   // proxyMap 中取出 对应的 响应式对象
@@ -102,25 +113,34 @@ const createReactiveObject = (
     return target;
   }
 
-  const proxy = new Proxy(target, targteType === TargetType.COLLECTION ? colloctionHandlers : baseHandlers);
+  const proxy = new Proxy(
+    target,
+    targteType === TargetType.COLLECTION ? colloctionHandlers : baseHandlers,
+  );
   proxyMap.set(target, proxy);
 
   return proxy;
 };
 
-export type UnwrapNestRefs<T> = T extends Ref ? T : UnwrapRefSimple<T>
+export type UnwrapNestRefs<T> = T extends Ref ? T : UnwrapRefSimple<T>;
 
 /**
- * 
+ *
  * @param target 传入的target
  */
 export function reactive<T extends object>(target: T): UnwrapNestRefs<T>;
 export function reactive(target: object) {
   // 如果传入的是一个readonly 的 直接返回就好
   if (isReadonly(target)) {
-    return target
+    return target;
   }
-  return createReactiveObject(target, false, mutableHandlers, mutableCollectionHandlers, reactiveMap);
+  return createReactiveObject(
+    target,
+    false,
+    mutableHandlers,
+    mutableCollectionHandlers,
+    reactiveMap,
+  );
 }
 
 type Primitive = string | number | boolean | bigint | symbol | undefined | null;
@@ -129,8 +149,8 @@ type Builtin = Primitive | Function | Date | Error | RegExp;
 // todo set map ref promise 类型推断
 export type DeepReadonly<T> = T extends Builtin
   ? T
-  // todo readonly map set xxx
-  : T extends Map<infer K, infer V>
+  : // todo readonly map set xxx
+  T extends Map<infer K, infer V>
   ? ReadonlyMap<DeepReadonly<K>, DeepReadonly<V>>
   : T extends ReadonlyMap<infer K, infer V>
   ? ReadonlyMap<DeepReadonly<K>, DeepReadonly<V>>
@@ -146,41 +166,62 @@ export type DeepReadonly<T> = T extends Builtin
   ? Promise<DeepReadonly<U>>
   : T extends {}
   ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
-  : T extends Ref<infer V> ? V
+  : T extends Ref<infer V>
+  ? V
   : Readonly<T>;
 
-export function readonly<T extends object>(target: T):DeepReadonly<T>;
+export function readonly<T extends object>(target: T): DeepReadonly<T>;
 export function readonly(target: object) {
-  return createReactiveObject(target, true, readonlyHandlers, readonlyCollectionHandlers ,readonlyMap);
+  return createReactiveObject(
+    target,
+    true,
+    readonlyHandlers,
+    readonlyCollectionHandlers,
+    readonlyMap,
+  );
 }
 
-export function shallowReactive<T extends object>(target: T): ShallowReactive<T>;
+export function shallowReactive<T extends object>(
+  target: T,
+): ShallowReactive<T>;
 export function shallowReactive(target: object) {
-  return createReactiveObject(target, false, shallowReactiveHandlers, shallowCollectionHandlers, shallowReactiveMap)
+  return createReactiveObject(
+    target,
+    false,
+    shallowReactiveHandlers,
+    shallowCollectionHandlers,
+    shallowReactiveMap,
+  );
 }
 
-export function shallowReadonly<T extends object>(target: T): Readonly<T>
+export function shallowReadonly<T extends object>(target: T): Readonly<T>;
 export function shallowReadonly(target: object) {
-  return createReactiveObject(target, true, shallowReadonlyHandlers, shallowReadonlyCollectionHandlers, shallowReadonlyMap)
+  return createReactiveObject(
+    target,
+    true,
+    shallowReadonlyHandlers,
+    shallowReadonlyCollectionHandlers,
+    shallowReadonlyMap,
+  );
 }
 
 export const isReactive: (value: unknown) => boolean = (value) => {
   if (isReadonly(value)) {
-    return isReactive((value as Target)[ReactiveFlags.RAW])
+    return isReactive((value as Target)[ReactiveFlags.RAW]);
   }
-  return !!(value && (value as Target)[ReactiveFlags.IS_REACTIVE])
-}
+  return !!(value && (value as Target)[ReactiveFlags.IS_REACTIVE]);
+};
 
 export const isReadonly = (value: unknown) => {
-  return !!(value && (value as Target)["__v_isReadonly"])
-}
+  return !!(value && (value as Target)['__v_isReadonly']);
+};
 
 export function isShallow(value: unknown): boolean {
-  return !!(value && (value as Target)[ReactiveFlags.IS_SHALLOW])
+  return !!(value && (value as Target)[ReactiveFlags.IS_SHALLOW]);
 }
 
 export function isProxy(value: unknown): boolean {
-  return isReactive(value) || isReadonly(value)
+  return isReactive(value) || isReadonly(value);
 }
 
 export function toRaw<T>(observed: T): T {
@@ -189,13 +230,13 @@ export function toRaw<T>(observed: T): T {
 }
 
 export function toReactive<T>(value: T): T {
-  return isObject(value) ? reactive(value) : value
+  return isObject(value) ? reactive(value) : value;
 }
 
 export const toReadonly = <T extends unknown>(value: T): T =>
-  isObject(value) ? readonly(value as Record<any, any>) : value
+  isObject(value) ? readonly(value as Record<any, any>) : value;
 
 export const markRaw = <T extends object>(value: T): T => {
   def(value, ReactiveFlags.SKIP, true);
   return value;
-}
+};

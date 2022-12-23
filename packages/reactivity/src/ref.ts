@@ -1,4 +1,4 @@
-import { hasChanged, extend, isArray } from './../../shared/index';
+import { hasChanged, extend, isArray } from 'shared/index';
 import { CollectionTypes } from './collectionHandlers';
 import {
   activeEffect,
@@ -17,6 +17,7 @@ import {
   isProxy,
 } from './reactive';
 import type { ShallowReactiveMarker } from './reactive';
+import { Dep, createDep } from './dep';
 
 declare const RefSymbol: unique symbol;
 declare const ShallowRefMarker: unique symbol;
@@ -32,7 +33,7 @@ export interface Ref<T = any> {
 }
 
 class RefImpl<T> {
-  private dep: Set<ReactiveEffect> = new Set();
+  private dep: Dep = createDep();
   private _value: T;
   private _rawValue: T;
   private readonly __v_isRef = true;
@@ -223,7 +224,7 @@ export type CustomRefFactory<T> = (
 };
 
 class CustomRefImpl<T> {
-  private dep: Set<ReactiveEffect> = new Set();
+  private dep: Dep = createDep();
   private _get: () => T;
   private _set: (value: T) => void;
   private __v_isRef = true;

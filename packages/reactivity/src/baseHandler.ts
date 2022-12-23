@@ -1,4 +1,4 @@
-import { makeMap } from '../../shared/makeMap';
+import { makeMap } from 'shared/makeMap';
 import {
   hasChanged,
   hasOwn,
@@ -7,8 +7,8 @@ import {
   extend,
   isObject,
   isSymbol,
-} from '../../shared';
-import { warn } from '../../shared/warning';
+} from 'shared';
+import { warn } from 'shared/warning';
 import {
   ITERATE_KEY,
   track,

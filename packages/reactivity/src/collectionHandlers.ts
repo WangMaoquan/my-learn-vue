@@ -1,10 +1,4 @@
-import {
-  capitalize,
-  extend,
-  hasChanged,
-  hasOwn,
-  toRawType,
-} from '../../shared';
+import { capitalize, extend, hasChanged, hasOwn, toRawType } from 'shared';
 import { ITERATE_KEY, track, trigger } from './effect';
 import { TrackOpTypes, TriggerOpTypes } from './operations';
 import {

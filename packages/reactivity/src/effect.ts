@@ -1,4 +1,4 @@
-import { extend, isArray, isMap, isObject, isSet } from '../../shared';
+import { extend, isArray, isMap, isObject, isSet } from 'shared';
 import { Dep, createDep, clearRestDep, initDeps } from './dep';
 
 type KeyToDepMap = Map<any, Dep>;
