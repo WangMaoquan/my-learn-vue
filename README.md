@@ -1,49 +1,7 @@
-测试用例都是看的官方的
-
-## 完成的功能
-
-### reactivity
-
-#### reactive.ts
-
-- [x] reactive
-- [x] readonly
-- [x] shallowReactive
-- [x] shallowReadonly
-- [x] isReactive
-- [x] isReadonly
-- [x] isShallow
-- [x] isProxy
-- [x] toRaw
-- [x] toReactive
-- [x] toReadonly
-- [x] markRaw
-
-#### ref.ts
-
-- [x] ref
-- [x] shallowRef
-- [x] isRef
-- [x] unref
-- [x] proxyRefs
-- [x] triggerRef
-- [x] toRef
-- [x] toRefs
-- [x] customRef
-
-#### computed.ts
-
-- [x] computed
-
-#### effect.ts
-
-- [x] effect
-- [x] track
-- [x] trackEffects
-- [x] canTrackEffect
-- [x] trigger
-- [x] triggerEffects
-- [x] triggerEffect
-- [ ] event onTrack
-- [ ] event onTrigger
-- [ ] event onStop
+Deat：新功能（feature）
+Fix：修补 bug
+Docs：文档（documentation）
+Style： 格式（不影响代码运行的变动）
+Refactor：重构（即不是新增功能，也不是修改 bug 的代码变动）
+Test：增加测试
+Chore：构建过程或辅助工具的变动
