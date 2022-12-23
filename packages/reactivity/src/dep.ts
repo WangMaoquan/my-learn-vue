@@ -1,13 +1,13 @@
 import { ReactiveEffect } from './effect';
 
 export type Dep = Set<ReactiveEffect> & {
-  isRestDep: boolean;
+	isRestDep: boolean;
 };
 
 export const createDep = (effects?: ReactiveEffect[]) => {
-  const dep = new Set<ReactiveEffect>(effects) as Dep;
-  dep.isRestDep = false;
-  return dep;
+	const dep = new Set<ReactiveEffect>(effects) as Dep;
+	dep.isRestDep = false;
+	return dep;
 };
 
 /**
@@ -16,13 +16,13 @@ export const createDep = (effects?: ReactiveEffect[]) => {
  * @param effect
  */
 export const initDeps = (effect: ReactiveEffect) => {
-  const { deps } = effect;
-  if (deps.length) {
-    for (let i = 0; i < deps.length; i++) {
-      const dep = deps[i];
-      dep.isRestDep = true;
-    }
-  }
+	const { deps } = effect;
+	if (deps.length) {
+		for (let i = 0; i < deps.length; i++) {
+			const dep = deps[i];
+			dep.isRestDep = true;
+		}
+	}
 };
 
 /**
@@ -30,19 +30,19 @@ export const initDeps = (effect: ReactiveEffect) => {
  * @param effect
  */
 export const clearRestDep = (effect: ReactiveEffect) => {
-  const { deps } = effect;
-  if (deps.length) {
-    let index = 0;
-    for (let i = 0; i < deps.length; i++) {
-      const dep = deps[i];
-      if (dep.isRestDep) {
-        dep.delete(effect);
-      } else {
-        deps[index++] = dep;
-      }
-      // clear bits
-      dep.isRestDep = false;
-    }
-    deps.length = index;
-  }
+	const { deps } = effect;
+	if (deps.length) {
+		let index = 0;
+		for (let i = 0; i < deps.length; i++) {
+			const dep = deps[i];
+			if (dep.isRestDep) {
+				dep.delete(effect);
+			} else {
+				deps[index++] = dep;
+			}
+			// clear bits
+			dep.isRestDep = false;
+		}
+		deps.length = index;
+	}
 };
