@@ -9,6 +9,14 @@ const packagesPath = path.resolve(__dirname, '../packages');
 // 打包后的地址
 const distPath = path.resolve(__dirname, '../dist');
 
+export const getPackagesAllPkgNames = () => {
+	const pkgNames = fs.readdirSync(packagesPath, {
+		encoding: 'utf-8',
+		withFileTypes: true
+	});
+	return pkgNames.filter((f) => !f.isFile()).map((f) => f.name);
+};
+
 export const resolvePath = (pkgName, isDist = false) => {
 	const path = isDist ? distPath : packagesPath;
 	return `${path}/${pkgName}`;
