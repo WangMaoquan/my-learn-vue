@@ -35,6 +35,7 @@ class RefImpl<T> {
 	private dep: Dep = createDep();
 	private _value: T;
 	private _rawValue: T;
+	// @ts-ignore
 	private readonly __v_isRef = true;
 	constructor(value: T, private __v_isShallow = false) {
 		// 判断value 是不是ref 再处理
@@ -153,6 +154,7 @@ export function triggerRef(ref: Ref) {
 }
 
 class ObjectRefImpl<T extends object, K extends keyof T> {
+	// @ts-ignore
 	private __v_isRef = true; // 通过isRef
 	constructor(
 		private _object: T,
@@ -226,6 +228,7 @@ class CustomRefImpl<T> {
 	private dep: Dep = createDep();
 	private _get: () => T;
 	private _set: (value: T) => void;
+	// @ts-ignore
 	private __v_isRef = true;
 	constructor(factory: CustomRefFactory<T>) {
 		/**

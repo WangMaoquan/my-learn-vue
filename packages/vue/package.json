@@ -1,8 +1,8 @@
 {
-  "name": "my-vue",
+  "name": "vue",
   "version": "1.0.0",
   "description": "wxm vue",
-  "main": "index.js",
+  "module": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
