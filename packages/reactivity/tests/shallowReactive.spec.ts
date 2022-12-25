@@ -3,11 +3,13 @@ import {
 	isReactive,
 	isShallow,
 	reactive,
-	shallowReadonly
-} from './../src/reactive';
-import { shallowReactive } from '../src/reactive';
-import { isRef, Ref, ref } from '../src/ref';
-import { effect } from '../src/effect';
+	shallowReadonly,
+	shallowReactive,
+	isRef,
+	Ref,
+	ref,
+	effect
+} from '../src';
 
 describe('shallowReactive', () => {
 	it('should not make non-reactive properties reactive', () => {

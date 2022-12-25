@@ -1,8 +1,15 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
-import { effect } from '../src/effect';
-import { isProxy, isReactive, markRaw, reactive, toRaw } from '../src/reactive';
-import { isRef, ref } from '../src/ref';
-import { computed } from '../src/computed';
+import {
+	isProxy,
+	isReactive,
+	markRaw,
+	reactive,
+	toRaw,
+	effect,
+	isRef,
+	ref,
+	computed
+} from '../src';
 
 describe('reactive', () => {
 	it('test', () => {

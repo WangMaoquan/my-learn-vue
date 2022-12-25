@@ -7,7 +7,8 @@ export {
 	unref,
 	proxyRefs,
 	customRef,
-	triggerRef
+	triggerRef,
+	Ref
 } from './ref';
 export {
 	reactive,
@@ -31,6 +32,7 @@ export {
 	enableTracking,
 	pauseTracking,
 	ITERATE_KEY,
-	ReactiveEffect
+	ReactiveEffect,
+	ReactiveEffectRunner
 } from './effect';
 export { TrackOpTypes, TriggerOpTypes } from './operations';

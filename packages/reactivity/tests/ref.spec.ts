@@ -1,12 +1,9 @@
-import { effect } from '../src/effect';
 import {
 	isReactive,
 	isShallow,
 	reactive,
 	readonly,
-	shallowReactive
-} from '../src/reactive';
-import {
+	shallowReactive,
 	customRef,
 	isRef,
 	proxyRefs,
@@ -16,9 +13,10 @@ import {
 	toRef,
 	toRefs,
 	triggerRef,
-	unref
-} from '../src/ref';
-import { computed } from '../src/computed';
+	unref,
+	effect,
+	computed
+} from '../src';
 
 describe('reactivity/ref', () => {
 	it('ref', () => {

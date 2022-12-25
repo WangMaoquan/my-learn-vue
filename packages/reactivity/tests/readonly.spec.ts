@@ -4,12 +4,12 @@ import {
 	isReadonly,
 	markRaw,
 	reactive,
-	toRaw
-} from './../src/reactive';
-import { readonly } from '../src/reactive';
-import { effect } from '../src/effect';
-import { ref } from '../src/ref';
-import { computed } from '../src/computed';
+	toRaw,
+	readonly,
+	effect,
+	ref,
+	computed
+} from '../src';
 
 type Writable<T> = { -readonly [P in keyof T]: T[P] };
 describe('readonly', () => {

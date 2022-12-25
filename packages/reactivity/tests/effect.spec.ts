@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
-import { effect, ReactiveEffectRunner, stop } from '../src/effect';
-import { reactive, toRaw } from '../src/reactive';
+import { effect, ReactiveEffectRunner, stop, reactive, toRaw } from '../src';
 
 describe('effect', () => {
 	// 1. effect 会执行一遍传入fn
