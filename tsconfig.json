@@ -34,7 +34,6 @@
   "include": [
     "packages/global.d.ts",
     "packages/*/src",
-    "packages/reactivity/index.ts",
     "packages/*/tests",
   ]
 }
