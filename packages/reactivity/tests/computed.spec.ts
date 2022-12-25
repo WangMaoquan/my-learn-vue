@@ -1,7 +1,11 @@
-import { isReadonly, reactive } from '../src/reactive';
-import { computed, WritableComputedRef } from '../src/computed';
-import { effect } from '../src/effect';
-import { ref } from '../src/ref';
+import {
+	isReadonly,
+	reactive,
+	computed,
+	WritableComputedRef,
+	effect,
+	ref
+} from '../src';
 
 describe('reactivity/computed', () => {
 	it('should return updated value', () => {

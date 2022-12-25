@@ -1,4 +1,3 @@
-import { makeMap } from 'shared/makeMap';
 import {
 	hasChanged,
 	hasOwn,
@@ -6,9 +5,10 @@ import {
 	isIntegerKey,
 	extend,
 	isObject,
-	isSymbol
-} from 'shared';
-import { warn } from 'shared/warning';
+	isSymbol,
+	warn,
+	makeMap
+} from '@vue/shared';
 import {
 	ITERATE_KEY,
 	track,

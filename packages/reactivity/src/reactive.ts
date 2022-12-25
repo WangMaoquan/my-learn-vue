@@ -4,7 +4,7 @@ import {
 	mutableCollectionHandlers,
 	readonlyCollectionHandlers
 } from './collectionHandlers';
-import { def, isObject, toRawType } from 'shared';
+import { def, isObject, toRawType } from '@vue/shared';
 import {
 	mutableHandlers,
 	readonlyHandlers,

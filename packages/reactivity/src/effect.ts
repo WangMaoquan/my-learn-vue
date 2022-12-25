@@ -1,4 +1,4 @@
-import { extend, isArray, isMap, isObject, isSet } from 'shared';
+import { extend, isArray, isMap, isObject, isSet } from '@vue/shared';
 import { Dep, createDep, clearRestDep, initDeps } from './dep';
 
 type KeyToDepMap = Map<any, Dep>;
@@ -196,6 +196,19 @@ export const trigger = (
 	}
 
 	// 数组需要把通过 length 收集的依赖 push
+	/**
+	 * const state = reactive([]);
+	 * effect(() => {
+	 *   console.log(`state: ${state[1]}`)
+	 * });
+	 *
+	 * 不会触发 effect
+	 * state.push(0);
+	 *
+	 * 触发 effect
+	 * state.push(1);
+	 * for in, forEach, map ... 都会触发 length 的依赖收集，从而 pop, push, shift... 等等操作都会触发响应式更新
+	 */
 	if (isArray(target)) {
 		deps.push(depsMap.get('length'));
 	}

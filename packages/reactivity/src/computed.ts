@@ -1,5 +1,5 @@
 import { createDep, Dep } from './dep';
-import { isFunction } from 'shared';
+import { isFunction } from '@vue/shared';
 import {
 	canTrackEffect,
 	ReactiveEffect,

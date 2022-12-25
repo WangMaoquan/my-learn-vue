@@ -1,4 +1,4 @@
-import { hasChanged, isArray } from 'shared/index';
+import { hasChanged, isArray } from '@vue/shared';
 import { CollectionTypes } from './collectionHandlers';
 import {
 	activeEffect,

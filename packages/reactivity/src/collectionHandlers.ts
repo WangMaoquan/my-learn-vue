@@ -1,4 +1,4 @@
-import { capitalize, hasChanged, hasOwn, toRawType } from 'shared';
+import { capitalize, hasChanged, hasOwn, toRawType } from '@vue/shared';
 import { ITERATE_KEY, track, trigger } from './effect';
 import { TriggerOpTypes } from './operations';
 import {
