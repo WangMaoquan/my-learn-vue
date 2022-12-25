@@ -1,3 +1,9 @@
+import { makeMap } from './makeMap';
+
+export { makeMap };
+export * from './typeUtils';
+export * from './warning';
+
 export const isArray = Array.isArray;
 
 export const isString = (val: unknown): val is string =>

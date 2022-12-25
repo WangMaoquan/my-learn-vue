@@ -1,5 +1,5 @@
 {
-  "name": "shared",
+  "name": "@vue/shared",
   "version": "1.0.0",
   "description": "公共方法",
   "module": "index.ts",
