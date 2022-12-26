@@ -108,6 +108,19 @@ export interface App<HostElement = any> {
 
 let uid = 0;
 
+export function createAppContext(): AppContext {
+	return {
+		app: null as any,
+		config: {
+			globalProperties: {}
+		},
+		mixins: [],
+		components: {},
+		directives: {},
+		provides: Object.create(null)
+	};
+}
+
 export function createAppAPI<HostElement>(
 	render: RootRenderFunction<HostElement>
 ): CreateAppFunction<HostElement> {
@@ -121,16 +134,33 @@ export function createAppAPI<HostElement>(
 			__DEV__ && warn(`root props passed to app.mount() must be an object.`);
 			rootProps = null;
 		}
+		// 创建上下文对象
+		const context = createAppContext();
 
 		// 初始化isMounted
 		let isMounted = false;
 
-		const app: App = {
+		const app: App = (context.app = {
 			_uid: uid++,
 			_component: rootComponent as ConcreteComponent,
 			_props: rootProps,
 			_instance: null,
 			_container: null,
+			_context: context,
+
+			// 直接返回context 的config
+			get config() {
+				return context.config;
+			},
+
+			// 不允许修改
+			set config(v) {
+				if (__DEV__) {
+					warn(
+						`app.config cannot be replaced. Modify individual options instead.`
+					);
+				}
+			},
 
 			mount(rootContainer: HostElement, isSVG?: boolean): any {
 				/**
@@ -154,7 +184,7 @@ export function createAppAPI<HostElement>(
 					warn(`App has already been mounted`);
 				}
 			}
-		};
+		});
 
 		return app;
 	};
