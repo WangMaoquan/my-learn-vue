@@ -22,7 +22,9 @@ export const createApp = ((...args) => {
 	const app = ensureRenderer().createApp(...args);
 	// 保存 app 本身的 mount
 	const { mount } = app;
-	app.mount = function (containerOrSelector: Element | ShadowRoot | string) {
+	app.mount = function (
+		containerOrSelector: Element | ShadowRoot | string
+	): any {
 		const container = normalizeContainer(containerOrSelector);
 		if (container) {
 			return mount(container, container instanceof SVGElement);
