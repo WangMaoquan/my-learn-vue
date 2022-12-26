@@ -136,6 +136,8 @@ export function createAppAPI<HostElement>(
 		}
 		// 创建上下文对象
 		const context = createAppContext();
+		// 保存 插件的 set
+		const installedPlugins = new Set();
 
 		// 初始化isMounted
 		let isMounted = false;
@@ -183,6 +185,29 @@ export function createAppAPI<HostElement>(
 				} else if (__DEV__) {
 					warn(`App has already been mounted`);
 				}
+			},
+
+			use(plugin: Plugin, ...options: any[]) {
+				// 先判断是否注册
+				if (installedPlugins.has(plugin)) {
+					__DEV__ &&
+						console.warn(`Plugin has already been applied to target app.`);
+				} else if (plugin && isFunction(plugin.install)) {
+					// 判断是否存在install 方法
+					installedPlugins.add(plugin);
+					// 调用install
+					plugin.install(app, ...options);
+				} else if (isFunction(plugin)) {
+					// 本身就是function 直接调用
+					installedPlugins.add(plugin);
+					plugin(app, ...options);
+				} else if (__DEV__) {
+					console.warn(
+						`A plugin must either be a function or an object with an "install" ` +
+							`function.`
+					);
+				}
+				return app;
 			}
 		});
 
