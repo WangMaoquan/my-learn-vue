@@ -1,5 +1,5 @@
 import { CreateAppFunction, Renderer, createRenderer } from '@vue/runtime-core';
-import { extend } from '@vue/shared';
+import { extend, isString, warn } from '@vue/shared';
 import { nodeOps } from './nodeOps';
 
 // 这里是浏览器 的rendereroptions
@@ -20,4 +20,39 @@ function ensureRenderer() {
  */
 export const createApp = ((...args) => {
 	const app = ensureRenderer().createApp(...args);
+	// 保存 app 本身的 mount
+	const { mount } = app;
+	app.mount = function (containerOrSelector: Element | ShadowRoot | string) {
+		const container = normalizeContainer(containerOrSelector);
+		if (container) {
+			return mount(container, container instanceof SVGElement);
+		}
+	};
+	return app;
 }) as CreateAppFunction<Element>;
+
+function normalizeContainer(container: Element | ShadowRoot | string) {
+	// 如果是 string 比如 #app
+	if (isString(container)) {
+		const res = document.querySelector(container);
+		if (__DEV__ && !res) {
+			warn(
+				`Failed to mount app: mount target selector "${container}" returned null.`
+			);
+		}
+		return res;
+	}
+	// about ShadowRoot https://developer.mozilla.org/zh-CN/docs/Web/API/ShadowRoot
+	// 如果是 ShadowRoot 且 mode 为 close, close 是不能被 javascript 访问的 会出现问题
+	if (
+		__DEV__ &&
+		window.ShadowRoot &&
+		container instanceof window.ShadowRoot &&
+		container.mode === 'closed'
+	) {
+		warn(
+			`mounting on a ShadowRoot with \`{mode: "closed"}\` may lead to unpredictable bugs`
+		);
+	}
+	return container as any;
+}

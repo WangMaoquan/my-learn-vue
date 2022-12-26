@@ -18,7 +18,7 @@ export type CreateAppFunction<HostElement> = (
  */
 export interface App<HostElement = any> {
 	// todo app 剩余的属性
-	mount(rootContainer: HostElement): any;
+	mount(rootContainer: HostElement, isSVG?: boolean): any;
 	_uid: number;
 }
 
