@@ -1,8 +1,36 @@
-import { ReactiveFlags, Ref } from '@vue/reactivity';
+import { isProxy, ReactiveFlags, toRaw } from '@vue/reactivity';
+import {
+	isFunction,
+	isObject,
+	isString,
+	ShapeFlags,
+	PatchFlags
+} from '@vue/shared';
 import { AppContext } from './apiCreateApp';
-import { Component, ComponentInternalInstance } from './component';
+import {
+	ClassComponent,
+	Component,
+	ComponentInternalInstance,
+	Data,
+	isClassComponent
+} from './component';
+import {
+	currentRenderingInstance,
+	currentScopeId
+} from './componentRenderContext';
+import { isSuspense } from './components/Suspense';
+import { isTeleport } from './components/Teleport';
+import { NULL_DYNAMIC_COMPONENT } from './helper/resolveAssets';
 import { RendererElement, RendererNode } from './renderer';
-
+export const Fragment = Symbol(__DEV__ ? 'Fragment' : undefined) as any as {
+	__isFragment: true;
+	new (): {
+		$props: VNodeProps;
+	};
+};
+export const Text = Symbol(__DEV__ ? 'Text' : undefined);
+export const Comment = Symbol(__DEV__ ? 'Comment' : undefined);
+export const Static = Symbol(__DEV__ ? 'Static' : undefined);
 export type VNodeTypes =
 	| string
 	| VNode
@@ -71,3 +99,91 @@ export type VNodeProps = {
 	// 卸载完成执行的钩子
 	onVnodeUnmounted?: VNodeMountHook | VNodeMountHook[];
 };
+
+export function isVNode(value: any): value is VNode {
+	return value ? value.__v_isVNode === true : false;
+}
+
+export const createVNode = _createVNode;
+
+function _createVNode(
+	type: VNodeTypes | ClassComponent | typeof NULL_DYNAMIC_COMPONENT,
+	props: (Data & VNodeProps) | null = null,
+	children: unknown = null,
+	patchFlag = 0,
+	dynamicProps: string[] | null = null,
+	isBlockNode = false
+): VNode {
+	if (!type || type === NULL_DYNAMIC_COMPONENT) {
+		if (__DEV__ && !type) {
+			console.warn(`Invalid vnode type when creating vnode: ${type}.`);
+		}
+		type = Comment;
+	}
+	if (isClassComponent(type)) {
+		type = type.__vccOpts;
+	}
+
+	const shapeFlag = isString(type)
+		? ShapeFlags.ELEMENT
+		: isSuspense(type)
+		? ShapeFlags.SUSPENSE
+		: isTeleport(type)
+		? ShapeFlags.TELEPORT
+		: isObject(type)
+		? ShapeFlags.STATEFUL_COMPONENT
+		: isFunction(type)
+		? ShapeFlags.FUNCTIONAL_COMPONENT
+		: 0;
+
+	return createBaseVNode(
+		type,
+		props,
+		children,
+		patchFlag,
+		dynamicProps,
+		shapeFlag,
+		isBlockNode,
+		true
+	);
+}
+
+function createBaseVNode(
+	type: VNodeTypes | ClassComponent | typeof NULL_DYNAMIC_COMPONENT,
+	props: (Data & VNodeProps) | null = null,
+	children: unknown = null,
+	patchFlag = 0,
+	dynamicProps: string[] | null = null,
+	shapeFlag = type === Fragment ? 0 : ShapeFlags.ELEMENT,
+	isBlockNode = false,
+	needFullChildrenNormalization = false
+) {
+	const vnode = {
+		__v_isVNode: true,
+		__v_skip: true,
+		type,
+		props,
+		key: props && props.key,
+		scopeId: currentScopeId,
+		slotScopeIds: null,
+		children,
+		component: null,
+		el: null,
+		shapeFlag,
+		patchFlag,
+		dynamicProps,
+		dynamicChildren: null,
+		appContext: null,
+		ctx: currentRenderingInstance
+	} as VNode;
+
+	if (children) {
+		vnode.shapeFlag |= isString(children)
+			? ShapeFlags.TEXT_CHILDREN
+			: ShapeFlags.ARRAY_CHILDREN;
+	}
+
+	return vnode;
+}
+
+export { createBaseVNode as createElementVNode };
