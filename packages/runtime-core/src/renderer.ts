@@ -1,5 +1,5 @@
 import { createAppAPI, CreateAppFunction } from './apiCreateApp';
-import { VNode } from './vnode';
+import { VNode, VNodeProps } from './vnode';
 
 export interface RendererNode {
 	[key: string]: any;
@@ -16,9 +16,44 @@ export interface RendererOptions<
 	HostNode = RendererNode,
 	HostElement = RendererElement
 > {
-	// 我这里先为了让eslint 通过随便写的俩
-	host: HostNode;
-	hostE: HostElement;
+	// 插入DOM元素 的方法
+	insert(el: HostNode, parent: HostElement, anchor?: HostNode | null): void;
+	// 删除DOM 元素的方法
+	remove(el: HostNode): void;
+	// 创建 DOM 元素的方法
+	createElement(
+		type: string,
+		isSVG?: boolean,
+		isCustomizedBuiltIn?: string,
+		vnodeProps?: (VNodeProps & { [key: string]: any }) | null
+	): HostElement;
+	// 创建文本元素的方法
+	createText(text: string): HostNode;
+	// 创建注释节点的方法
+	createComment(text: string): HostNode;
+	// 修改文本的方法
+	setText(node: HostNode, text: string): void;
+	// 修改元素文本的方法
+	setElementText(node: HostElement, text: string): void;
+	// 获取父级节点的方法
+	parentNode(node: HostNode): HostElement | null;
+	// 获取兄弟节点的方法
+	nextSibling(node: HostNode): HostNode | null;
+	// 根据 id/class ...  选择器获取 DOM 的放
+	querySelector?(selector: string): HostElement | null;
+	//  设置 scopeId
+	setScopeId?(el: HostElement, id: string): void;
+	// 克隆DOM 的方法
+	cloneNode?(node: HostNode): HostNode;
+	// 插入静态内容的方法
+	insertStaticContent?(
+		content: string,
+		parent: HostElement,
+		anchor: HostNode | null,
+		isSVG: boolean,
+		start?: HostNode | null,
+		end?: HostNode | null
+	): [HostNode, HostNode];
 }
 
 /**
@@ -54,7 +89,12 @@ export interface Renderer<HostElement = RendererElement> {
 function baseCreateRenderer<
 	HostNode = RendererNode,
 	HostElement = RendererElement
->(options: RendererOptions<HostNode, HostElement>) {
+>(options: RendererOptions<HostNode, HostElement>): Renderer<HostElement>;
+
+function baseCreateRenderer<
+	HostNode = RendererNode,
+	HostElement = RendererElement
+>(options: RendererOptions<HostNode, HostElement>): any {
 	const render: RootRenderFunction = (vnode, container, isSVG) => {
 		if (vnode == null) {
 			// 卸载
@@ -66,5 +106,5 @@ function baseCreateRenderer<
 	return {
 		render,
 		createApp: createAppAPI(render)
-	} as Renderer<HostElement>;
+	};
 }
