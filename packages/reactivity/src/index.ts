@@ -23,7 +23,12 @@ export {
 	toRaw,
 	ReactiveFlags
 } from './reactive';
-export { computed, WritableComputedRef } from './computed';
+export {
+	computed,
+	WritableComputedRef,
+	ComputedGetter,
+	WritableComputedOptions
+} from './computed';
 export {
 	effect,
 	stop,

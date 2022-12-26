@@ -172,9 +172,6 @@ export const trigger = (
 	newValue?: unknown,
 	oldValue?: unknown
 ) => {
-	// 暂时跳过校验
-	console.log('newValue', newValue);
-	console.log('oldValue', oldValue);
 	// 获取 对应的 dep map
 	const depsMap = targetMap.get(target);
 	if (!depsMap) {
