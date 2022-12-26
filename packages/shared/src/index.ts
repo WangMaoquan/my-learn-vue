@@ -3,6 +3,8 @@ import { makeMap } from './makeMap';
 export { makeMap };
 export * from './typeUtils';
 export * from './warning';
+export * from './patchFlags';
+export * from './shapeFlags';
 
 export const NOOP = () => {};
 
