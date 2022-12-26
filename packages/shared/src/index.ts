@@ -4,6 +4,8 @@ export { makeMap };
 export * from './typeUtils';
 export * from './warning';
 
+export const NOOP = () => {};
+
 export const isArray = Array.isArray;
 
 export const isString = (val: unknown): val is string =>
