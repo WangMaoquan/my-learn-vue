@@ -117,7 +117,7 @@ export function createAppContext(): AppContext {
 		mixins: [],
 		components: {},
 		directives: {},
-		provides: Object.create(null)
+		provides: Object.create(null) // privide 的实现其实就是一直查找原型链
 	};
 }
 
@@ -251,6 +251,24 @@ export function createAppAPI<HostElement>(
 					);
 				}
 				context.directives[name] = directive;
+				return app;
+			},
+			unmount() {
+				if (isMounted) {
+					render(null, app._container);
+					app._instance = null;
+				} else if (__DEV__) {
+					console.warn(`Cannot unmount an app that is not mounted.`);
+				}
+			},
+			provide(key, value) {
+				if (__DEV__ && (key as string | symbol) in context.provides) {
+					console.warn(
+						`App already provides property with key "${String(key)}". ` +
+							`It will be overwritten with the new value.`
+					);
+				}
+				context.provides[key as string | symbol] = value;
 				return app;
 			}
 		});
