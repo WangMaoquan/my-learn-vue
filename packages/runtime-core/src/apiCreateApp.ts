@@ -224,6 +224,34 @@ export function createAppAPI<HostElement>(
 					warn('Mixins are only available in builds supporting Options API');
 				}
 				return app;
+			},
+			component(name: string, component?: Component): any {
+				// todo 检验name 是否合法
+				// 第二个参数不存在 说明是根据name 返回组件的
+				if (!component) {
+					return context.components[name];
+				}
+				if (__DEV__ && context.components[name]) {
+					console.warn(
+						`Component "${name}" has already been registered in target app.`
+					);
+				}
+				context.components[name] = component;
+				return app;
+			},
+			directive(name: string, directive?: Directive) {
+				// ToDo 校验指令名是否合法
+				// 第二个参数不存在 说明是根据name 返回指令的
+				if (!directive) {
+					return context.directives[name] as any;
+				}
+				if (__DEV__ && context.directives[name]) {
+					warn(
+						`Directive "${name}" has already been registered in target app.`
+					);
+				}
+				context.directives[name] = directive;
+				return app;
 			}
 		});
 
