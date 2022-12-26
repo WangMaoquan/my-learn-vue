@@ -1,7 +1,8 @@
 module.exports = {
 	setupFilesAfterEnv: ['./scripts/setupJestEnv.ts'],
 	globals: {
-		__DEV__: true
+		__DEV__: true,
+		__FEATURE_OPTIONS_API__: true
 	},
 	rootDir: __dirname,
 	watchPathIgnorePatterns: ['/node_modules/', '/dist/', '/.git/'],
