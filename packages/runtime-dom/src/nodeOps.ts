@@ -37,5 +37,14 @@ export const nodeOps: RendererOptions<Node, Element> = {
 	},
 	parentNode(node) {
 		return node.parentNode as Element | null;
+	},
+	nextSibling(node) {
+		return node.nextSibling as Element | null;
+	},
+	querySelector(selector) {
+		return doc.querySelector(selector);
+	},
+	setScopeId(el, id) {
+		el.setAttribute(id, '');
 	}
 };
