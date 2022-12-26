@@ -22,5 +22,20 @@ export const nodeOps: RendererOptions<Node, Element> = {
 			: doc.createElement(tag, is ? { is } : undefined);
 
 		return el;
+	},
+	createComment(text) {
+		return doc.createComment(text);
+	},
+	createText(text) {
+		return doc.createTextNode(text);
+	},
+	setElementText(el, text) {
+		el.textContent = text;
+	},
+	setText(node, text) {
+		node.nodeValue = text;
+	},
+	parentNode(node) {
+		return node.parentNode as Element | null;
 	}
 };
