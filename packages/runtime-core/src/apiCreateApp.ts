@@ -208,6 +208,22 @@ export function createAppAPI<HostElement>(
 					);
 				}
 				return app;
+			},
+			mixin(mixin: ComponentOptions) {
+				// 只有在使用optionApi 时才使用
+				if (__FEATURE_OPTIONS_API__) {
+					if (!context.mixins.includes(mixin)) {
+						context.mixins.push(mixin);
+					} else if (__DEV__) {
+						console.warn(
+							'Mixin has already been applied to target app' +
+								(mixin.name ? `: ${mixin.name}` : '')
+						);
+					}
+				} else if (__DEV__) {
+					warn('Mixins are only available in builds supporting Options API');
+				}
+				return app;
 			}
 		});
 
