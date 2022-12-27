@@ -2,6 +2,7 @@ import { isFunction } from '@vue/shared';
 import { EmitsOptions } from './componentEmits';
 import { ComponentOptions } from './componentOptions';
 import { ComponentPublicInstance } from './componentPublicInstance';
+import { Slots } from './componentSlots';
 
 export type Data = Record<string, unknown>;
 export interface Component {}
@@ -16,7 +17,7 @@ export interface ClassComponent {
 export type SetupContext<E = EmitsOptions> = E extends any
 	? {
 			attrs: Data;
-			slots: {};
+			slots: Slots;
 			emit: Function;
 			expose: (exposed?: Record<string, any>) => void;
 	  }
