@@ -1,4 +1,5 @@
 import { createAppAPI, CreateAppFunction } from './apiCreateApp';
+import { ComponentInternalInstance } from './component';
 import { VNode, VNodeProps } from './vnode';
 
 export interface RendererNode {
@@ -86,6 +87,24 @@ export interface Renderer<HostElement = RendererElement> {
 	createApp: CreateAppFunction<HostElement>;
 }
 
+// patch
+type PatchFn = (
+	n1: VNode | null, // null 就是 挂载, 旧vnode
+	n2: VNode, // 新 vnode
+	container: RendererElement,
+	anchor?: RendererNode | null,
+	parentComponent?: ComponentInternalInstance | null,
+	isSVG?: boolean
+) => void;
+
+// processText
+type ProcessTextFn = (
+	n1: VNode | null,
+	n2: VNode,
+	container: RendererElement,
+	anchor: RendererNode | null
+) => void;
+
 function baseCreateRenderer<
 	HostNode = RendererNode,
 	HostElement = RendererElement
@@ -94,12 +113,57 @@ function baseCreateRenderer<
 function baseCreateRenderer<
 	HostNode = RendererNode,
 	HostElement = RendererElement
->(options: RendererOptions<HostNode, HostElement>): any {
+>(options: RendererOptions): any {
+	const {
+		insert: hostInsert,
+		createText: hostCreateText,
+		setText: hostSetText
+	} = options;
+
+	const processText: ProcessTextFn = (n1, n2, container, anchor) => {
+		if (n1 == null) {
+			// 挂载
+			hostInsert(
+				(n2.el = hostCreateText(n2.children as string)),
+				container,
+				anchor
+			);
+		} else {
+			// 更新
+			const el = (n2.el = n1.el!);
+			if (n2.children !== n1.children) {
+				hostSetText(el, n2.children as string);
+			}
+		}
+	};
+
+	/**
+	 * 主要做的 根据新vnode 的类型 执行不同的 process 操作
+	 */
+	const patch: PatchFn = (
+		n1,
+		n2,
+		container,
+		anchor,
+		parentComponent,
+		isSVG
+	) => {
+		const { type } = n2;
+		switch (type) {
+			case Text:
+				processText(n1, n2, container, anchor || null);
+				break;
+			default:
+				console.warn(`为实现的type: ${String(type)}`);
+		}
+	};
+
 	const render: RootRenderFunction = (vnode, container, isSVG) => {
 		if (vnode == null) {
 			// 卸载
 		} else {
 			// 挂载 patch
+			patch(container._vnode || null, vnode, container, null, null, isSVG);
 		}
 	};
 
