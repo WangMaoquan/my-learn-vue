@@ -1,14 +1,15 @@
-import { isFunction, isObject, warn } from '@vue/shared';
+import { isFunction, isObject, NO, warn } from '@vue/shared';
 import { InjectionKey } from './apiInject';
 import {
 	Component,
 	ComponentInternalInstance,
 	ConcreteComponent,
-	Data
+	Data,
+	validateComponentName
 } from './component';
 import { ComponentOptions } from './componentOptions';
 import { ComponentPublicInstance } from './componentPublicInstance';
-import { Directive } from './directives';
+import { Directive, validateDirectiveName } from './directives';
 import { RootRenderFunction } from './renderer';
 import { VNode } from './vnode';
 
@@ -21,6 +22,8 @@ export type CreateAppFunction<HostElement> = (
 ) => App<HostElement>;
 
 export interface AppConfig {
+	// 判断是否是原生tag的方法
+	isNativeTag: (tag: string) => boolean;
 	// 全局方法/属性的存放处
 	globalProperties: Record<string, any>;
 
@@ -112,6 +115,7 @@ export function createAppContext(): AppContext {
 	return {
 		app: null as any,
 		config: {
+			isNativeTag: NO,
 			globalProperties: {}
 		},
 		mixins: [],
@@ -227,6 +231,9 @@ export function createAppAPI<HostElement>(
 			},
 			component(name: string, component?: Component): any {
 				// todo 检验name 是否合法
+				if (__DEV__) {
+					validateComponentName(name, context.config);
+				}
 				// 第二个参数不存在 说明是根据name 返回组件的
 				if (!component) {
 					return context.components[name];
@@ -241,6 +248,9 @@ export function createAppAPI<HostElement>(
 			},
 			directive(name: string, directive?: Directive) {
 				// ToDo 校验指令名是否合法
+				if (__DEV__) {
+					validateDirectiveName(name);
+				}
 				// 第二个参数不存在 说明是根据name 返回指令的
 				if (!directive) {
 					return context.directives[name] as any;
