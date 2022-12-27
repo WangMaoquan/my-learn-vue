@@ -11,7 +11,7 @@ import { ComponentOptions } from './componentOptions';
 import { ComponentPublicInstance } from './componentPublicInstance';
 import { Directive, validateDirectiveName } from './directives';
 import { RootRenderFunction } from './renderer';
-import { VNode } from './vnode';
+import { createVNode } from './vnode';
 
 /**
  * 创建app方法
@@ -178,7 +178,10 @@ export function createAppAPI<HostElement>(
 					// 所以我们需要调用生成vnode的方法
 					// todo createVnode 方法
 					// const vnode = createVnode();
-					const vnode = {} as VNode;
+					const vnode = createVNode(
+						rootComponent as ConcreteComponent,
+						rootProps
+					);
 
 					// 调用render
 					render(vnode, rootContainer, isSVG);
