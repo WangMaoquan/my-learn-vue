@@ -1,11 +1,5 @@
-import { isProxy, ReactiveFlags, toRaw } from '@vue/reactivity';
-import {
-	isFunction,
-	isObject,
-	isString,
-	ShapeFlags,
-	PatchFlags
-} from '@vue/shared';
+import { ReactiveFlags } from '@vue/reactivity';
+import { isFunction, isObject, isString, ShapeFlags } from '@vue/shared';
 import { AppContext } from './apiCreateApp';
 import {
 	ClassComponent,
