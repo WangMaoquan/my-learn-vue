@@ -11,9 +11,16 @@ export type ConcreteComponent = {};
 export interface ComponentInternalInstance {}
 
 export interface ClassComponent {
-	new (...args: any[]): ComponentPublicInstance<any, any, any, any, any>;
+	new (...args: any[]): ComponentPublicInstance<any, any, any>;
 	__vccOpts: ComponentOptions;
 }
+
+export interface AllowedComponentProps {
+	class?: unknown;
+	style?: unknown;
+}
+
+export interface ComponentCustomProps {}
 
 export type SetupContext<E = EmitsOptions> = E extends any
 	? {
@@ -29,7 +36,7 @@ export function isClassComponent(value: unknown): value is ClassComponent {
 }
 
 // slot 和 component 是内置的
-const isBuiltInTag = /*#__PURE__*/ makeMap('slot,component');
+const isBuiltInTag = makeMap('slot,component');
 
 export function validateComponentName(name: string, config: AppConfig) {
 	const appIsNativeTag = config.isNativeTag || NO;
