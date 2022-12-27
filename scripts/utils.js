@@ -9,12 +9,16 @@ const packagesPath = path.resolve(__dirname, '../packages');
 // 打包后的地址
 const distPath = path.resolve(__dirname, '../dist');
 
-export const getPackagesAllPkgNames = () => {
+export const getPackagesAllPkgNames = (option = {}) => {
+	const { exclude = ['shared'] } = option;
 	const pkgNames = fs.readdirSync(packagesPath, {
 		encoding: 'utf-8',
 		withFileTypes: true
 	});
-	return pkgNames.filter((f) => !f.isFile()).map((f) => f.name);
+	return pkgNames
+		.filter((f) => !f.isFile())
+		.map((f) => f.name)
+		.filter((f) => !exclude.includes(f));
 };
 
 export const resolvePath = (pkgName, isDist = false) => {
@@ -31,7 +35,8 @@ export const getPackagesJson = (pkgName) => {
 
 export function getBasePlugins({
 	alias = {
-		__Dev__: true
+		__DEV__: true,
+		__FEATURE_OPTIONS_API__: true
 	},
 	typescript = {}
 } = {}) {

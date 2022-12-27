@@ -529,7 +529,6 @@ describe('effect', () => {
 
 		expect(dummy).toBe(undefined);
 		expect(parentDummy).toBe(undefined);
-		const rawObj = toRaw(obj);
 		toRaw(obj).prop = 4;
 		expect(dummy).toBe(undefined);
 		expect(parentDummy).toBe(undefined);

@@ -20,9 +20,10 @@ const createBuildConfig = (pkgNames) => {
 		configs.push({
 			input: `${pkgPath}/${module}`,
 			output: {
-				name: pkgName,
+				name: pkgName === 'vue' ? 'Vue' : pkgName,
 				file: `${pkgDistPath}/index.js`,
-				format: 'cjs'
+				// "amd", "cjs", "system", "es", "iife" or "umd"
+				format: 'umd'
 			},
 			plugins: [
 				...plugins,
