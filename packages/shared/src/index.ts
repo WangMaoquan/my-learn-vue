@@ -8,6 +8,8 @@ export * from './shapeFlags';
 
 export const NOOP = () => {};
 
+export const NO = () => false;
+
 export const isArray = Array.isArray;
 
 export const isString = (val: unknown): val is string =>
