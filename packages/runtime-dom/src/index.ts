@@ -26,9 +26,10 @@ export const createApp = ((...args) => {
 		containerOrSelector: Element | ShadowRoot | string
 	): any {
 		const container = normalizeContainer(containerOrSelector);
-		if (container) {
-			return mount(container, container instanceof SVGElement);
-		}
+		if (!container) return;
+		container.innerHTML = '';
+		const proxy = mount(container, container instanceof SVGElement);
+		return proxy;
 	};
 	return app;
 }) as CreateAppFunction<Element>;
