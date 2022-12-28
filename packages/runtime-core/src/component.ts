@@ -1,12 +1,22 @@
-import { ReactiveEffect } from '@vue/reactivity';
+import {
+	markRaw,
+	track,
+	ReactiveEffect,
+	shallowReadonly
+} from '@vue/reactivity';
 import { EMPTY_OBJ, isFunction, makeMap, NO, ShapeFlags } from '@vue/shared';
 import { AppConfig, AppContext, createAppContext } from './apiCreateApp';
 import { emit, EmitsOptions, ObjectEmitsOptions } from './componentEmits';
 import { ComponentOptions } from './componentOptions';
-import { NormalizedPropsOptions } from './componentProps';
-import { ComponentPublicInstance } from './componentPublicInstance';
+import { initProps, NormalizedPropsOptions } from './componentProps';
+import {
+	ComponentPublicInstance,
+	exposePropsOnRenderContext,
+	PublicInstanceProxyHandlers
+} from './componentPublicInstance';
+import { markAttrsAccessed } from './componentRenderUtils';
 import { InternalSlots, Slots } from './componentSlots';
-import { Directive } from './directives';
+import { Directive, validateDirectiveName } from './directives';
 import { SchedulerJob } from './scheduler';
 import { VNode } from './vnode';
 
@@ -16,7 +26,7 @@ export type ConcreteComponent<Props = {}, RawBindings = any> = ComponentOptions<
 	Props,
 	RawBindings
 >;
-export interface ComponentInternalInstance {}
+
 export interface ComponentInternalInstance {
 	uid: number; // 标识符
 	type: ConcreteComponent; // 组件的type
@@ -42,12 +52,15 @@ export interface ComponentInternalInstance {
 	exposeProxy: Record<string, any> | null; // 导出的proxy
 	ctx: Data; // 上下文
 	data: Data;
+	propsDefaults: Data;
 	props: Data;
 	attrs: Data;
 	slots: InternalSlots;
 	refs: Data; // 保存的ref
 	emit: Function; // emit
 	emitted: Record<string, boolean> | null; // 加了.once 的
+	accessCache: Data | null; // 避免hasown
+	renderCache: (Function | VNode)[]; // render 的cache
 	setupState: Data; // setup方法的返回值 不是当做render 的情况下
 	setupContext: SetupContext | null; // setup 的第二个参数
 	isMounted: boolean; // 是否挂载
@@ -135,9 +148,13 @@ export function createComponentInstance(
 
 		inheritAttrs: type.inheritAttrs,
 
+		accessCache: null,
+		renderCache: [],
+
 		ctx: EMPTY_OBJ,
 		data: EMPTY_OBJ,
 		props: EMPTY_OBJ,
+		propsDefaults: EMPTY_OBJ,
 		slots: EMPTY_OBJ,
 		attrs: EMPTY_OBJ,
 		refs: EMPTY_OBJ,
@@ -151,4 +168,121 @@ export function createComponentInstance(
 	instance.emit = emit.bind(null, instance);
 
 	return instance;
+}
+
+export function setupComponent(instance: ComponentInternalInstance) {
+	const { props } = instance.vnode;
+	initProps(instance, props);
+
+	// todo slots 处理
+
+	const setupResult = setupStatefulComponent(instance);
+	return setupResult;
+}
+
+function setupStatefulComponent(instance: ComponentInternalInstance) {
+	// 这个type 其实就是 我们定义的那个对象 { setup() {}, .... }
+	const Component = instance.type as ComponentOptions;
+
+	if (__DEV__) {
+		if (Component.name) {
+			validateComponentName(Component.name, instance.appContext.config);
+		}
+		if (Component.components) {
+			const names = Object.keys(Component.components);
+			for (let i = 0; i < names.length; i++) {
+				validateComponentName(names[i], instance.appContext.config);
+			}
+		}
+		if (Component.directives) {
+			const names = Object.keys(Component.directives);
+			for (let i = 0; i < names.length; i++) {
+				validateDirectiveName(names[i]);
+			}
+		}
+	}
+	instance.accessCache = Object.create(null);
+	instance.proxy = markRaw(
+		new Proxy(instance.ctx, PublicInstanceProxyHandlers)
+	);
+	if (__DEV__) {
+		// 会把props 弄到ctx上
+		exposePropsOnRenderContext(instance);
+	}
+	const { setup } = Component;
+	if (setup) {
+		// 根据setup 的参数数量 选择是否需要创建 context
+		// setup(props) {} 1
+		// setup(props, ctx) {} 2
+		const setupContext = (instance.setupContext =
+			setup.length > 1 ? createSetupContext(instance) : null);
+
+		// todo 执行setup
+	} else {
+		// 应该调用组件的render
+	}
+}
+
+function createAttrsProxy(instance: ComponentInternalInstance): Data {
+	return new Proxy(
+		instance.attrs,
+		__DEV__
+			? {
+					get(target, key: string) {
+						markAttrsAccessed();
+						track(instance, '$attrs');
+						return target[key];
+					},
+					set() {
+						console.warn(`setupContext.attrs is readonly.`);
+						return false;
+					},
+					deleteProperty() {
+						console.warn(`setupContext.attrs is readonly.`);
+						return false;
+					}
+			  }
+			: {
+					get(target, key: string) {
+						track(instance, '$attrs');
+						return target[key];
+					}
+			  }
+	);
+}
+
+export function createSetupContext(
+	instance: ComponentInternalInstance
+): SetupContext {
+	const expose: SetupContext['expose'] = (exposed) => {
+		if (__DEV__ && instance.exposed) {
+			console.warn(`expose() should be called only once per setup().`);
+		}
+		instance.exposed = exposed || {};
+	};
+
+	let attrs: Data;
+	if (__DEV__) {
+		return Object.freeze({
+			get attrs() {
+				return attrs || (attrs = createAttrsProxy(instance));
+			},
+			get slots() {
+				return shallowReadonly(instance.slots);
+			},
+			get emit() {
+				return (event: string, ...args: any[]) => instance.emit(event, ...args);
+			},
+			expose
+		});
+	} else {
+		return {
+			get attrs() {
+				return attrs || (attrs = createAttrsProxy(instance));
+			},
+			slots: instance.slots,
+			emit: instance.emit,
+			expose
+		};
+	}
 }
