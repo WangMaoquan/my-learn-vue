@@ -6,10 +6,12 @@ import { CreateComponentPublicInstance } from './componentPublicInstance';
 import { Directive } from './directives';
 import { VNodeChild } from './vnode';
 
-export type ComponentOptions = {
-	name: string;
-};
-
+export type ComponentOptions<
+	Props = {},
+	RawBindings = any,
+	E extends EmitsOptions = any
+> = ComponentOptionsBase<Props, RawBindings, E> &
+	ThisType<CreateComponentPublicInstance<Readonly<Props>, RawBindings, E>>;
 export type ComputedOptions = Record<
 	string,
 	ComputedGetter<any> | WritableComputedOptions<any>
