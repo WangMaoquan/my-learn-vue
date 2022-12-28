@@ -2,7 +2,8 @@ import { ShapeFlags } from '@vue/shared';
 import { createAppAPI, CreateAppFunction } from './apiCreateApp';
 import {
 	ComponentInternalInstance,
-	createComponentInstance
+	createComponentInstance,
+	setupComponent
 } from './component';
 import { VNode, VNodeProps } from './vnode';
 
@@ -165,8 +166,11 @@ function baseCreateRenderer<
 		parentComponent,
 		isSVG
 	) => {
+		// 创建组件instance 并赋值给 vnode.component
 		const instance: ComponentInternalInstance = (initialVNode.component =
 			createComponentInstance(initialVNode, parentComponent));
+
+		setupComponent(instance);
 	};
 
 	const updateComponent = () => {};
