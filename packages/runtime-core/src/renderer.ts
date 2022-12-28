@@ -1,5 +1,9 @@
+import { ShapeFlags } from '@vue/shared';
 import { createAppAPI, CreateAppFunction } from './apiCreateApp';
-import { ComponentInternalInstance } from './component';
+import {
+	ComponentInternalInstance,
+	createComponentInstance
+} from './component';
 import { VNode, VNodeProps } from './vnode';
 
 export interface RendererNode {
@@ -105,6 +109,23 @@ type ProcessTextFn = (
 	anchor: RendererNode | null
 ) => void;
 
+type ProcessComponentFn = (
+	n1: VNode | null,
+	n2: VNode,
+	container: RendererElement,
+	anchor: RendererNode | null,
+	parentComponent: ComponentInternalInstance | null,
+	isSVG: boolean
+) => void;
+
+export type MountComponentFn = (
+	initialVNode: VNode,
+	container: RendererElement,
+	anchor: RendererNode | null,
+	parentComponent: ComponentInternalInstance | null,
+	isSVG: boolean
+) => void;
+
 function baseCreateRenderer<
 	HostNode = RendererNode,
 	HostElement = RendererElement
@@ -137,10 +158,20 @@ function baseCreateRenderer<
 		}
 	};
 
-	/**
-	 * 主要做的 根据新vnode 的类型 执行不同的 process 操作
-	 */
-	const patch: PatchFn = (
+	const mountComponent: MountComponentFn = (
+		initialVNode,
+		container,
+		anchor,
+		parentComponent,
+		isSVG
+	) => {
+		const instance: ComponentInternalInstance = (initialVNode.component =
+			createComponentInstance(initialVNode, parentComponent));
+	};
+
+	const updateComponent = () => {};
+
+	const processComponent: ProcessComponentFn = (
 		n1,
 		n2,
 		container,
@@ -148,13 +179,40 @@ function baseCreateRenderer<
 		parentComponent,
 		isSVG
 	) => {
-		const { type } = n2;
+		if (n1 == null) {
+			// 挂载
+			mountComponent(n2, container, anchor, parentComponent, isSVG);
+		} else {
+			// 更新
+			updateComponent();
+		}
+	};
+
+	/**
+	 * 主要做的 根据新vnode 的类型 执行不同的 process 操作
+	 */
+	const patch: PatchFn = (
+		n1,
+		n2,
+		container,
+		anchor = null,
+		parentComponent = null,
+		isSVG = false
+	) => {
+		const { type, shapeFlag } = n2;
 		switch (type) {
 			case Text:
-				processText(n1, n2, container, anchor || null);
+				processText(n1, n2, container, anchor);
+				break;
+			case Comment:
+				// todo 注释节点
 				break;
 			default:
-				console.warn(`为实现的type: ${String(type)}`);
+				if (shapeFlag & ShapeFlags.COMPONENT) {
+					processComponent(n1, n2, container, anchor, parentComponent, isSVG);
+				} else {
+					console.warn(`为实现的type: ${String(type)}`);
+				}
 		}
 	};
 
