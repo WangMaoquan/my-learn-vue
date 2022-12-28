@@ -1,1 +1,3 @@
-export { createApp } from '../runtime-dom/index';
+export * from '../runtime-dom';
+export * from '../runtime-core';
+export * from '../reactivity';
