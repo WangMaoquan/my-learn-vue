@@ -8,11 +8,20 @@ export let shouldTrack = true;
 
 export const ITERATE_KEY = 'ITERATE_KEY';
 
+const trackStack: boolean[] = [];
+
+export function resetTracking() {
+	const last = trackStack.pop();
+	shouldTrack = last === undefined ? true : last;
+}
+
 export function pauseTracking() {
+	trackStack.push(shouldTrack);
 	shouldTrack = false;
 }
 
 export function enableTracking() {
+	trackStack.push(shouldTrack);
 	shouldTrack = true;
 }
 
