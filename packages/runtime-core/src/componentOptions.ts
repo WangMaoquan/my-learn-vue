@@ -43,7 +43,7 @@ export interface ComponentOptionsBase<
 	Props,
 	RawBindings,
 	E extends EmitsOptions
-> {
+> extends ComponentCustomOptions {
 	// 使用setup
 	setup?: (
 		this: void,

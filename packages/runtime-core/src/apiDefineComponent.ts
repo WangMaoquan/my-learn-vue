@@ -1,9 +1,15 @@
-import { AllowedComponentProps, ComponentCustomProps } from './component';
+import { isFunction } from '@vue/shared';
+import {
+	AllowedComponentProps,
+	ComponentCustomProps,
+	SetupContext
+} from './component';
 import { EmitsOptions } from './componentEmits';
 import {
 	ComponentOptionsBase,
 	ComponentOptionsWithArrayProps,
-	ComponentOptionsWithoutProps
+	ComponentOptionsWithoutProps,
+	RenderFunction
 } from './componentOptions';
 import { ComponentPropsOptions, ExtractPropTypes } from './componentProps';
 import { VNodeProps } from './vnode';
@@ -45,6 +51,13 @@ export function defineComponent<
 	options: ComponentOptionsWithArrayProps<PropNames, RawBindings, E>
 ): DefineComponent<Readonly<{ [key in PropNames]?: any }>, RawBindings, E>;
 
+export function defineComponent<Props, RawBindings = object>(
+	setup: (
+		props: Readonly<Props>,
+		ctx: SetupContext
+	) => RawBindings | RenderFunction
+): DefineComponent<Props, RawBindings>;
+
 export function defineComponent(options: unknown) {
-	return options;
+	return isFunction(options) ? { name: options.name, setup: options } : options;
 }
