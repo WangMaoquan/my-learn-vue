@@ -36,7 +36,8 @@ export const getPackagesJson = (pkgName) => {
 export function getBasePlugins({
 	alias = {
 		__DEV__: true,
-		__FEATURE_OPTIONS_API__: true
+		__FEATURE_OPTIONS_API__: true,
+		preventAssignment: true
 	},
 	typescript = {}
 } = {}) {
