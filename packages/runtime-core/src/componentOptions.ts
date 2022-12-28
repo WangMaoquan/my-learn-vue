@@ -6,6 +6,7 @@ import { CreateComponentPublicInstance } from './componentPublicInstance';
 import { Directive } from './directives';
 import { VNodeChild } from './vnode';
 
+export let shouldCacheAccess = true;
 export type ComponentOptions<
 	Props = {},
 	RawBindings = any,
