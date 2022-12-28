@@ -10,6 +10,10 @@ export const NOOP = () => {};
 
 export const NO = () => false;
 
+export const EMPTY_OBJ: { readonly [key: string]: any } = __DEV__
+	? Object.freeze({})
+	: {};
+
 export const isArray = Array.isArray;
 
 export const isString = (val: unknown): val is string =>
@@ -71,3 +75,15 @@ const cacheStringFunction = <T extends (str: string) => string>(fn: T): T => {
 export const capitalize = cacheStringFunction(
 	(str: string) => str.charAt(0).toUpperCase() + str.slice(1)
 );
+
+export const toHandlerKey = cacheStringFunction((str: string) =>
+	str ? `on${capitalize(str)}` : ``
+);
+
+const camelizeRE = /-(\w)/g;
+/**
+ * @private
+ */
+export const camelize = cacheStringFunction((str: string): string => {
+	return str.replace(camelizeRE, (_, c) => (c ? c.toUpperCase() : ''));
+});
