@@ -81,9 +81,13 @@ export const toHandlerKey = cacheStringFunction((str: string) =>
 );
 
 const camelizeRE = /-(\w)/g;
-/**
- * @private
- */
+//  驼峰写法
 export const camelize = cacheStringFunction((str: string): string => {
 	return str.replace(camelizeRE, (_, c) => (c ? c.toUpperCase() : ''));
 });
+
+const hyphenateRE = /\B([A-Z])/g;
+// 连字符
+export const hyphenate = cacheStringFunction((str: string) =>
+	str.replace(hyphenateRE, '-$1').toLowerCase()
+);
