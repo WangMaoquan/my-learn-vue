@@ -16,6 +16,7 @@ import { isSuspense } from './components/Suspense';
 import { isTeleport } from './components/Teleport';
 import { NULL_DYNAMIC_COMPONENT } from './helper/resolveAssets';
 import { RendererElement, RendererNode } from './renderer';
+export const InternalObjectKey = `__vInternal`;
 export const Fragment = Symbol(__DEV__ ? 'Fragment' : undefined) as any as {
 	__isFragment: true;
 	new (): {
