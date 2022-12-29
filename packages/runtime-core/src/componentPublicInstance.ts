@@ -1,3 +1,4 @@
+import { toRaw } from '@vue/reactivity';
 import { EMPTY_OBJ, hasOwn, isString, NOOP } from '@vue/shared';
 import { ComponentInternalInstance, Data } from './component';
 import { EmitsOptions } from './componentEmits';
@@ -243,4 +244,29 @@ export function exposePropsOnRenderContext(
 			});
 		});
 	}
+}
+
+export function exposeSetupStateOnRenderContext(
+	instance: ComponentInternalInstance
+) {
+	const { ctx, setupState } = instance;
+	Object.keys(toRaw(setupState)).forEach((key) => {
+		if (!setupState.__isScriptSetup) {
+			if (isReservedPrefix(key[0])) {
+				console.warn(
+					`setup() return property ${JSON.stringify(
+						key
+					)} should not start with "$" or "_" ` +
+						`which are reserved prefixes for Vue internals.`
+				);
+				return;
+			}
+			Object.defineProperty(ctx, key, {
+				enumerable: true,
+				configurable: true,
+				get: () => setupState[key],
+				set: NOOP
+			});
+		}
+	});
 }

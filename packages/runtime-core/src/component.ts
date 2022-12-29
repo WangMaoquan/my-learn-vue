@@ -2,9 +2,20 @@ import {
 	markRaw,
 	track,
 	ReactiveEffect,
-	shallowReadonly
+	shallowReadonly,
+	pauseTracking,
+	proxyRefs
 } from '@vue/reactivity';
-import { EMPTY_OBJ, isFunction, makeMap, NO, ShapeFlags } from '@vue/shared';
+import {
+	EMPTY_OBJ,
+	isFunction,
+	isObject,
+	makeMap,
+	NO,
+	NOOP,
+	ShapeFlags
+} from '@vue/shared';
+import { resetTracking } from 'packages/reactivity/src/effect';
 import { AppConfig, AppContext, createAppContext } from './apiCreateApp';
 import { emit, EmitsOptions, ObjectEmitsOptions } from './componentEmits';
 import { ComponentOptions } from './componentOptions';
@@ -12,13 +23,15 @@ import { initProps, NormalizedPropsOptions } from './componentProps';
 import {
 	ComponentPublicInstance,
 	exposePropsOnRenderContext,
+	exposeSetupStateOnRenderContext,
 	PublicInstanceProxyHandlers
 } from './componentPublicInstance';
+import { currentRenderingInstance } from './componentRenderContext';
 import { markAttrsAccessed } from './componentRenderUtils';
 import { InternalSlots, Slots } from './componentSlots';
 import { Directive, validateDirectiveName } from './directives';
 import { SchedulerJob } from './scheduler';
-import { VNode } from './vnode';
+import { isVNode, VNode, VNodeChild } from './vnode';
 
 export type Data = Record<string, unknown>;
 export interface Component {}
@@ -26,6 +39,34 @@ export type ConcreteComponent<Props = {}, RawBindings = any> = ComponentOptions<
 	Props,
 	RawBindings
 >;
+
+export type InternalRenderFunction = {
+	(
+		ctx: ComponentPublicInstance,
+		cache: ComponentInternalInstance['renderCache'],
+		$props: ComponentInternalInstance['props'],
+		$setup: ComponentInternalInstance['setupState'],
+		$data: ComponentInternalInstance['data'],
+		$options: ComponentInternalInstance['ctx']
+	): VNodeChild;
+	_rc?: boolean; // isRuntimeCompiled
+};
+
+// 当前实例
+export let currentInstance: ComponentInternalInstance | null = null;
+
+// 获取当前实例
+export const getCurrentInstance: () => ComponentInternalInstance | null = () =>
+	currentInstance || currentRenderingInstance;
+
+// 设置当前实例
+export const setCurrentInstance = (instance: ComponentInternalInstance) => {
+	currentInstance = instance;
+};
+
+export const unsetCurrentInstance = () => {
+	currentInstance = null;
+};
 
 export interface ComponentInternalInstance {
 	uid: number; // 标识符
@@ -218,6 +259,17 @@ function setupStatefulComponent(instance: ComponentInternalInstance) {
 			setup.length > 1 ? createSetupContext(instance) : null);
 
 		// todo 执行setup
+		// 设置当前实例
+		setCurrentInstance(instance);
+		// 暂停依赖收集
+		pauseTracking();
+		// 拿到 setup返回结果
+		const setupResult = setup(shallowReadonly(instance.props), setupContext!);
+		// 执行处理 setupResult的方法
+		handleSetupResult(instance, setupResult);
+		// 恢复
+		resetTracking();
+		unsetCurrentInstance();
 	} else {
 		// 应该调用组件的render
 	}
@@ -284,5 +336,44 @@ export function createSetupContext(
 			emit: instance.emit,
 			expose
 		};
+	}
+}
+
+export function handleSetupResult(
+	instance: ComponentInternalInstance,
+	setupResult: unknown
+) {
+	if (isFunction(setupResult)) {
+		instance.render = setupResult as InternalRenderFunction;
+	} else if (isObject(setupResult)) {
+		if (__DEV__ && isVNode(setupResult)) {
+			console.warn(
+				`setup() should not return VNodes directly - ` +
+					`return a render function instead.`
+			);
+		}
+		instance.setupState = proxyRefs(setupResult);
+		if (__DEV__) {
+			// 将 setup的返回的key 挂载到 实例上
+			exposeSetupStateOnRenderContext(instance);
+		}
+	} else if (__DEV__ && setupResult !== undefined) {
+		console.warn(
+			`setup() should return an object. Received: ${
+				setupResult === null ? 'null' : typeof setupResult
+			}`
+		);
+	}
+	finishComponentSetup(instance);
+}
+
+export function finishComponentSetup(instance: ComponentInternalInstance) {
+	const Component = instance.type as ComponentOptions;
+	// todo 处理不存在 render 的情况
+
+	// ToDo 2.x options
+
+	if (__DEV__ && !Component.render && instance.render === NOOP) {
+		console.warn(`Component is missing template or render function.`);
 	}
 }
