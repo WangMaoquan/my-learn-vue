@@ -271,7 +271,7 @@ function setupStatefulComponent(instance: ComponentInternalInstance) {
 		resetTracking();
 		unsetCurrentInstance();
 	} else {
-		// 应该调用组件的render
+		finishComponentSetup(instance);
 	}
 }
 
