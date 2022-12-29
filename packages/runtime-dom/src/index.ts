@@ -59,3 +59,5 @@ function normalizeContainer(container: Element | ShadowRoot | string) {
 	}
 	return container as any;
 }
+
+export * from '@vue/runtime-core';

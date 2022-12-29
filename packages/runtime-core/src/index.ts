@@ -5,3 +5,5 @@ export * from './vnode';
 export * from './apiDefineComponent';
 export * from './apiInject';
 export * from './apiWatch';
+
+export * from '@vue/reactivity';

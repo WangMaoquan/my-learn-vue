@@ -3,9 +3,24 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "module": "index.ts",
+  "module": "dist/runtime-dom.esm-bundler.js",
+  "types": "dist/runtime-dom.d.ts",
+  "unpkg": "dist/runtime-dom.global.js",
+  "files": [
+    "index.js",
+    "dist"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "buildOptions": {
+    "name": "VueRuntimeDOM",
+    "formats": [
+      "esm-bundler",
+      "esm-browser",
+      "cjs",
+      "global"
+    ]
   },
   "keywords": [],
   "author": "",

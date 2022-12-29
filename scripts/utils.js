@@ -1,45 +1,40 @@
-import path from 'path';
-import fs from 'fs';
-import ts from 'rollup-plugin-typescript2';
-import cjs from '@rollup/plugin-commonjs';
-import replace from '@rollup/plugin-replace';
+const fs = require('fs');
+const chalk = require('chalk');
 
-// 保存 packages 文件的路径
-const packagesPath = path.resolve(__dirname, '../packages');
-// 打包后的地址
-const distPath = path.resolve(__dirname, '../dist');
+const targets = (exports.targets = fs.readdirSync('packages').filter((f) => {
+	if (!fs.statSync(`packages/${f}`).isDirectory()) {
+		return false;
+	}
+	const pkg = require(`../packages/${f}/package.json`);
+	if (pkg.private && !pkg.buildOptions) {
+		return false;
+	}
+	return true;
+}));
 
-export const getPackagesAllPkgNames = (option = {}) => {
-	const { exclude = ['shared'] } = option;
-	const pkgNames = fs.readdirSync(packagesPath, {
-		encoding: 'utf-8',
-		withFileTypes: true
+exports.fuzzyMatchTarget = (partialTargets, includeAllMatching) => {
+	const matched = [];
+	partialTargets.forEach((partialTarget) => {
+		for (const target of targets) {
+			if (target.match(partialTarget)) {
+				matched.push(target);
+				if (!includeAllMatching) {
+					break;
+				}
+			}
+		}
 	});
-	return pkgNames
-		.filter((f) => !f.isFile())
-		.map((f) => f.name)
-		.filter((f) => !exclude.includes(f));
-};
+	if (matched.length) {
+		return matched;
+	} else {
+		console.log();
+		console.error(
+			`  ${chalk.bgRed.white(' ERROR ')} ${chalk.red(
+				`Target ${chalk.underline(partialTargets)} not found!`
+			)}`
+		);
+		console.log();
 
-export const resolvePath = (pkgName, isDist = false) => {
-	const path = isDist ? distPath : packagesPath;
-	return `${path}/${pkgName}`;
+		process.exit(1);
+	}
 };
-
-export const getPackagesJson = (pkgName) => {
-	// 找到对应模块下的 package.json
-	const path = `${resolvePath(pkgName)}/package.json`;
-	const pkgJsonStr = fs.readFileSync(path, { encoding: 'utf-8' });
-	return JSON.parse(pkgJsonStr);
-};
-
-export function getBasePlugins({
-	alias = {
-		__DEV__: true,
-		__FEATURE_OPTIONS_API__: true,
-		preventAssignment: true
-	},
-	typescript = {}
-} = {}) {
-	return [replace(alias), cjs(), ts(typescript)];
-}
