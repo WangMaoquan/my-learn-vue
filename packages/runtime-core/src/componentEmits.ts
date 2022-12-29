@@ -19,6 +19,6 @@ export function emit(
 	let handler =
 		props[(handlerName = toHandlerKey(event))] ||
 		props[(handlerName = toHandlerKey(camelize(event)))];
-
+	handlerName;
 	handler(...rawArgs);
 }

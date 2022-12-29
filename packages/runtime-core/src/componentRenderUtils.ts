@@ -4,3 +4,6 @@ let accessedAttrs = false;
 export function markAttrsAccessed() {
 	accessedAttrs = true;
 }
+
+// 校验通过
+accessedAttrs;
