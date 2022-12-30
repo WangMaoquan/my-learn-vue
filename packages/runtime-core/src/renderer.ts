@@ -1,3 +1,4 @@
+import { ReactiveEffect } from '@vue/reactivity';
 import { ShapeFlags } from '@vue/shared';
 import { createAppAPI, CreateAppFunction } from './apiCreateApp';
 import {
@@ -5,6 +6,7 @@ import {
 	createComponentInstance,
 	setupComponent
 } from './component';
+import { SchedulerJob } from './scheduler';
 import { VNode, VNodeProps } from './vnode';
 
 export interface RendererNode {
@@ -206,7 +208,39 @@ function baseCreateRenderer<
 		container,
 		anchor,
 		isSVG
-	) => {};
+	) => {
+		// 传给 reactiveEffect 的fn
+		const componentUpdateFn = () => {
+			if (!instance.isMounted) {
+				/**
+				 * 挂载
+				 * 1. 调用beforeMount emmm instance上还没有给生命周期留位置 回头补上
+				 * 2. 调用vnode 上面的 beforeMount
+				 * 3. 执行render
+				 * 4. 调用mounted钩子
+				 * 5. 修改isMounted为true
+				 */
+			} else {
+				/**
+				 * 更新
+				 */
+			}
+		};
+
+		// 创建 组件的render effect 并将update 作为scheduler 传入
+		const effect = (instance.effect = new ReactiveEffect(
+			componentUpdateFn,
+			() => update
+		));
+
+		// 组件更新调用的方法
+		const update: SchedulerJob = (instance.update = () => effect.run());
+		// 组件的创建顺序一定是 先父后子, 所以执行副作用的时候 也一定是id小的在前面, 所以 update.id 直接用 instance的uid
+		update.id = instance.uid;
+
+		// 然后我们需要手动执行下
+		update();
+	};
 
 	const updateComponent = () => {};
 
