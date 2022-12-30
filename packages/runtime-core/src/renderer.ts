@@ -127,6 +127,14 @@ export type MountComponentFn = (
 	isSVG: boolean
 ) => void;
 
+export type SetupRenderEffectFn = (
+	instance: ComponentInternalInstance,
+	initialVNode: VNode,
+	container: RendererElement,
+	anchor: RendererNode | null,
+	isSVG: boolean
+) => void;
+
 function baseCreateRenderer<
 	HostNode = RendererNode,
 	HostElement = RendererElement
@@ -179,7 +187,26 @@ function baseCreateRenderer<
 		 * 		然后将 setupResult 代理到 ctx上, 最后执行的是 finishComponent方法, 主要处理的是不存在render, 和 处理optionApi那一套的逻辑
 		 */
 		setupComponent(instance);
+
+		// 初始化 renderEffect
+		setupRenderEffect(instance, initialVNode, container, anchor, isSVG);
 	};
+
+	/**
+	 * 初始化 component renderEffect 的方法
+	 * @param instance 当前实例
+	 * @param initialVNode mount的vnode
+	 * @param container 挂载的元素
+	 * @param anchor 挂载目标
+	 * @param isSVG 是否是svg
+	 */
+	const setupRenderEffect: SetupRenderEffectFn = (
+		instance,
+		initialVNode,
+		container,
+		anchor,
+		isSVG
+	) => {};
 
 	const updateComponent = () => {};
 
