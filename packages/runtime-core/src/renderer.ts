@@ -230,7 +230,7 @@ function baseCreateRenderer<
 		// 创建 组件的render effect 并将update 作为scheduler 传入
 		const effect = (instance.effect = new ReactiveEffect(
 			componentUpdateFn,
-			() => update
+			() => update // todo 需要用调度来, 但是我还没实现
 		));
 
 		// 组件更新调用的方法

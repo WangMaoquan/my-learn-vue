@@ -40,6 +40,19 @@ export type ConcreteComponent<Props = {}, RawBindings = any> = ComponentOptions<
 	RawBindings
 >;
 
+type LifecycleHook<TFn = Function> = TFn[] | null;
+
+export const enum LifecycleHooks {
+	BEFORE_CREATE = 'bc',
+	CREATED = 'c',
+	BEFORE_MOUNT = 'bm',
+	MOUNTED = 'm',
+	BEFORE_UPDATE = 'bu',
+	UPDATED = 'u',
+	BEFORE_UNMOUNT = 'bum',
+	UNMOUNTED = 'um'
+}
+
 export type InternalRenderFunction = {
 	(
 		ctx: ComponentPublicInstance,
@@ -106,6 +119,40 @@ export interface ComponentInternalInstance {
 	setupContext: SetupContext | null; // setup 的第二个参数
 	isMounted: boolean; // 是否挂载
 	isUnmounted: boolean; // 是否已经卸载
+
+	// 生命周期
+	/**
+	 * @internal
+	 */
+	[LifecycleHooks.BEFORE_CREATE]: LifecycleHook;
+	/**
+	 * @internal
+	 */
+	[LifecycleHooks.CREATED]: LifecycleHook;
+	/**
+	 * @internal
+	 */
+	[LifecycleHooks.BEFORE_MOUNT]: LifecycleHook;
+	/**
+	 * @internal
+	 */
+	[LifecycleHooks.MOUNTED]: LifecycleHook;
+	/**
+	 * @internal
+	 */
+	[LifecycleHooks.BEFORE_UPDATE]: LifecycleHook;
+	/**
+	 * @internal
+	 */
+	[LifecycleHooks.UPDATED]: LifecycleHook;
+	/**
+	 * @internal
+	 */
+	[LifecycleHooks.BEFORE_UNMOUNT]: LifecycleHook;
+	/**
+	 * @internal
+	 */
+	[LifecycleHooks.UNMOUNTED]: LifecycleHook;
 }
 
 export interface ClassComponent {
@@ -202,7 +249,15 @@ export function createComponentInstance(
 		setupState: EMPTY_OBJ,
 		setupContext: null,
 		isMounted: false,
-		isUnmounted: false
+		isUnmounted: false,
+		bc: null,
+		c: null,
+		bm: null,
+		m: null,
+		bu: null,
+		u: null,
+		um: null,
+		bum: null
 	};
 	instance.ctx = { _: instance };
 	instance.root = parent ? parent.root : instance;
