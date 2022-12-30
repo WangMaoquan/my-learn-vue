@@ -170,6 +170,14 @@ function baseCreateRenderer<
 		const instance: ComponentInternalInstance = (initialVNode.component =
 			createComponentInstance(initialVNode, parentComponent));
 
+		/**
+		 * 这个方法主要做的是
+		 * 1. 初始化props/ slots(待)
+		 * 2. 然后 通过 setupStatefulComponent 初始化 instance 上的proxy,accessCache,
+		 * 		把props代理到ctx上, 判断有无 setup, 有就执行setup, 然后判断setupResult 是方法 还是对象,
+		 * 		方法就作为instance的render, 判断是否是对象(vnode 会被发出警告), 作为instance上setupState 赋值
+		 * 		然后将 setupResult 代理到 ctx上, 最后执行的是 finishComponent方法, 主要处理的是不存在render, 和 处理optionApi那一套的逻辑
+		 */
 		setupComponent(instance);
 	};
 
