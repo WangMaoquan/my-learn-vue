@@ -78,6 +78,12 @@ type VNodeMountHook = (vnode: VNode) => void;
 // vnode 更新钩子
 type VNodeUpdateHook = (vnode: VNode, oldVNode: VNode) => void;
 
+export type VNodeHook =
+	| VNodeMountHook
+	| VNodeUpdateHook
+	| VNodeMountHook[]
+	| VNodeUpdateHook[];
+
 export type VNodeProps = {
 	key?: string | number | symbol; // 唯一key
 
