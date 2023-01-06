@@ -1,5 +1,12 @@
 import { ReactiveFlags } from '@vue/reactivity';
-import { isFunction, isObject, isString, ShapeFlags } from '@vue/shared';
+import {
+	isArray,
+	isFunction,
+	isObject,
+	isString,
+	PatchFlags,
+	ShapeFlags
+} from '@vue/shared';
 import { AppContext } from './apiCreateApp';
 import {
 	ClassComponent,
@@ -188,3 +195,63 @@ function createBaseVNode(
 }
 
 export { createBaseVNode as createElementVNode };
+
+export function normalizeVNode(child: VNodeChild): VNode {
+	if (child == null || typeof child === 'boolean') {
+		return createVNode(Comment);
+	} else if (isArray(child)) {
+		// 暂时是用p标签来代替
+		return createVNode('p', null, child.slice());
+	} else if (typeof child === 'object') {
+		return cloneIfMounted(child);
+	} else {
+		return createVNode(Text, null, String(child));
+	}
+}
+
+export function cloneIfMounted(child: VNode): VNode {
+	return child.el === null && child.patchFlag !== PatchFlags.HOISTED
+		? child
+		: cloneVNode(child);
+}
+
+export function cloneVNode<T, U>(
+	vnode: VNode<T, U>,
+	extraProps?: (Data & VNodeProps) | null,
+	mergeRef = false
+): VNode<T, U> {
+	const { props, patchFlag, children } = vnode;
+	const mergedProps = extraProps ? { ...props, ...extraProps } : props;
+	const cloned: VNode<T, U> = {
+		__v_isVNode: true,
+		__v_skip: true,
+		type: vnode.type,
+		props: mergedProps,
+		key: mergedProps?.key || null,
+		children:
+			__DEV__ && patchFlag === PatchFlags.HOISTED && isArray(children)
+				? (children as VNode[]).map(deepCloneVNode)
+				: children,
+		shapeFlag: vnode.shapeFlag,
+
+		patchFlag:
+			extraProps && vnode.type !== Fragment
+				? patchFlag === -1 // hoisted node
+					? PatchFlags.FULL_PROPS
+					: patchFlag | PatchFlags.FULL_PROPS
+				: patchFlag,
+		appContext: vnode.appContext,
+		component: vnode.component,
+		el: vnode.el,
+		ctx: vnode.ctx
+	};
+	return cloned as any;
+}
+
+function deepCloneVNode(vnode: VNode): VNode {
+	const cloned = cloneVNode(vnode);
+	if (isArray(vnode.children)) {
+		cloned.children = (vnode.children as VNode[]).map(deepCloneVNode);
+	}
+	return cloned;
+}
