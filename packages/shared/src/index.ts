@@ -91,3 +91,9 @@ const hyphenateRE = /\B([A-Z])/g;
 export const hyphenate = cacheStringFunction((str: string) =>
 	str.replace(hyphenateRE, '-$1').toLowerCase()
 );
+
+export const invokeArrayFns = (fns: Function[], arg?: any) => {
+	for (let i = 0; i < fns.length; i++) {
+		fns[i](arg);
+	}
+};
