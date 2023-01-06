@@ -1,13 +1,14 @@
 import { ReactiveEffect } from '@vue/reactivity';
-import { ShapeFlags } from '@vue/shared';
+import { invokeArrayFns, isFunction, ShapeFlags } from '@vue/shared';
 import { createAppAPI, CreateAppFunction } from './apiCreateApp';
 import {
 	ComponentInternalInstance,
 	createComponentInstance,
 	setupComponent
 } from './component';
+import { renderComponentRoot } from './componentRenderUtils';
 import { SchedulerJob } from './scheduler';
-import { VNode, VNodeProps } from './vnode';
+import { VNode, VNodeHook, VNodeProps } from './vnode';
 
 export interface RendererNode {
 	[key: string]: any;
@@ -220,6 +221,42 @@ function baseCreateRenderer<
 				 * 4. 调用mounted钩子
 				 * 5. 修改isMounted为true
 				 */
+				let vnodeHook: VNodeHook | null | undefined;
+				const { el, props } = initialVNode;
+				const { bm, m, parent } = instance;
+				// 触发 beforemount
+				if (bm) {
+					invokeArrayFns(bm);
+				}
+				// vnode 的 onVnodeBeforeMount
+				if ((vnodeHook = props && props.onVnodeBeforeMount)) {
+					if (isFunction(vnodeHook)) {
+						vnodeHook(parent as any, initialVNode);
+					} else {
+						vnodeHook.forEach((hook) => {
+							hook(parent as any, initialVNode);
+						});
+					}
+				}
+				const subTree = (instance.subTree = renderComponentRoot(instance));
+				patch(null, subTree, container, anchor, instance, isSVG);
+				initialVNode.el = subTree.el;
+				// mounted
+				if (m) {
+					invokeArrayFns(m);
+				}
+				// vnode 的 onVnodeMounted
+				if ((vnodeHook = props && props.onVnodeMounted)) {
+					if (isFunction(vnodeHook)) {
+						vnodeHook(parent as any, initialVNode);
+					} else {
+						vnodeHook.forEach((hook) => {
+							hook(parent as any, initialVNode);
+						});
+					}
+				}
+				instance.isMounted = true;
+				initialVNode = container = anchor = null as any;
 			} else {
 				/**
 				 * 更新
@@ -302,4 +339,11 @@ function baseCreateRenderer<
 		render,
 		createApp: createAppAPI(render)
 	};
+}
+
+function toggleRecurse(
+	{ effect, update }: ComponentInternalInstance,
+	allowed: boolean
+) {
+	effect.allowRecurse = update.allowRecurse = allowed;
 }
