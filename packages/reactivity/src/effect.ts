@@ -45,6 +45,7 @@ export class ReactiveEffect<T = any> {
 	deps: Dep[] = []; // 啥时候存 track的时候 收集依赖的时候就可以存了
 	computed?: boolean;
 	parent?: ReactiveEffect;
+	allowRecurse?: boolean;
 	constructor(
 		public fn: () => T,
 		public scheduler: EffectScheduler | null = null
