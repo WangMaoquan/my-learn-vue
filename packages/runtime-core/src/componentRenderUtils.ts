@@ -10,6 +10,9 @@ export function markAttrsAccessed() {
 	accessedAttrs = true;
 }
 
+// 校验
+accessedAttrs;
+
 export function renderComponentRoot(
 	instance: ComponentInternalInstance
 ): VNode {
@@ -51,6 +54,8 @@ export function renderComponentRoot(
 			fallthroughAttrs = attrs;
 		}
 	} catch (err) {
+		// 通过校验
+		fallthroughAttrs;
 		console.log(err);
 		result = createVNode(Comment);
 	}

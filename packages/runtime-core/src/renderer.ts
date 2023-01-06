@@ -150,7 +150,9 @@ function baseCreateRenderer<
 	const {
 		insert: hostInsert,
 		createText: hostCreateText,
-		setText: hostSetText
+		setText: hostSetText,
+		createElement: hostCreateElement,
+		setElementText: hostSetElementText
 	} = options;
 
 	const processText: ProcessTextFn = (n1, n2, container, anchor) => {
@@ -167,6 +169,49 @@ function baseCreateRenderer<
 			if (n2.children !== n1.children) {
 				hostSetText(el, n2.children as string);
 			}
+		}
+	};
+
+	const mountElement = (
+		vnode: VNode,
+		container: RendererElement,
+		anchor: RendererNode | null,
+		parentComponent: ComponentInternalInstance | null,
+		isSVG: boolean
+	) => {
+		let el: RendererElement;
+		const { props, shapeFlag } = vnode;
+
+		el = vnode.el = hostCreateElement(
+			vnode.type as string,
+			isSVG,
+			props && props.is,
+			props
+		);
+
+		// 需要先挂载children
+		if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+			hostSetElementText(el, vnode.children as string);
+		}
+		// todo vnode 上的mounted
+
+		hostInsert(el, container, anchor);
+	};
+
+	const processElement = (
+		n1: VNode | null,
+		n2: VNode,
+		container: RendererElement,
+		anchor: RendererNode | null,
+		parentComponent: ComponentInternalInstance | null,
+		isSVG: boolean
+	) => {
+		isSVG = isSVG || (n2.type as string) === 'svg';
+		if (n1 == null) {
+			// 挂载
+			mountElement(n2, container, anchor, parentComponent, isSVG);
+		} else {
+			// 更新
 		}
 	};
 
@@ -222,8 +267,9 @@ function baseCreateRenderer<
 				 * 5. 修改isMounted为true
 				 */
 				let vnodeHook: VNodeHook | null | undefined;
-				const { el, props } = initialVNode;
+				const { props } = initialVNode;
 				const { bm, m, parent } = instance;
+				toggleRecurse(instance, false);
 				// 触发 beforemount
 				if (bm) {
 					invokeArrayFns(bm);
@@ -238,6 +284,7 @@ function baseCreateRenderer<
 						});
 					}
 				}
+				toggleRecurse(instance, true);
 				const subTree = (instance.subTree = renderComponentRoot(instance));
 				patch(null, subTree, container, anchor, instance, isSVG);
 				initialVNode.el = subTree.el;
@@ -318,7 +365,9 @@ function baseCreateRenderer<
 				// todo 注释节点
 				break;
 			default:
-				if (shapeFlag & ShapeFlags.COMPONENT) {
+				if (shapeFlag & ShapeFlags.ELEMENT) {
+					processElement(n1, n2, container, anchor, parentComponent, isSVG);
+				} else if (shapeFlag & ShapeFlags.COMPONENT) {
 					processComponent(n1, n2, container, anchor, parentComponent, isSVG);
 				} else {
 					console.warn(`为实现的type: ${String(type)}`);
