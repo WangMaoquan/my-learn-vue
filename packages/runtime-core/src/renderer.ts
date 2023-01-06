@@ -8,7 +8,13 @@ import {
 } from './component';
 import { renderComponentRoot } from './componentRenderUtils';
 import { SchedulerJob } from './scheduler';
-import { VNode, VNodeHook, VNodeProps } from './vnode';
+import {
+	normalizeVNode,
+	VNode,
+	VNodeArrayChildren,
+	VNodeHook,
+	VNodeProps
+} from './vnode';
 
 export interface RendererNode {
 	[key: string]: any;
@@ -138,6 +144,15 @@ export type SetupRenderEffectFn = (
 	isSVG: boolean
 ) => void;
 
+type MountChildrenFn = (
+	children: VNodeArrayChildren,
+	container: RendererElement,
+	anchor: RendererNode | null,
+	parentComponent: ComponentInternalInstance | null,
+	isSVG: boolean,
+	start?: number
+) => void;
+
 function baseCreateRenderer<
 	HostNode = RendererNode,
 	HostElement = RendererElement
@@ -172,6 +187,20 @@ function baseCreateRenderer<
 		}
 	};
 
+	const mountChildren: MountChildrenFn = (
+		children,
+		container,
+		anchor,
+		parentComponent,
+		isSVG,
+		start = 0
+	) => {
+		for (let i = start; i < children.length; i++) {
+			const child = (children[i] = normalizeVNode(children[i]));
+			patch(null, child, container, anchor, parentComponent, isSVG);
+		}
+	};
+
 	const mountElement = (
 		vnode: VNode,
 		container: RendererElement,
@@ -192,6 +221,14 @@ function baseCreateRenderer<
 		// 需要先挂载children
 		if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
 			hostSetElementText(el, vnode.children as string);
+		} else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+			mountChildren(
+				vnode.children as VNodeArrayChildren,
+				el,
+				null,
+				parentComponent,
+				isSVG
+			);
 		}
 		// todo vnode 上的mounted
 
