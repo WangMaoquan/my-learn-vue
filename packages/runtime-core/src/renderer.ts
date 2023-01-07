@@ -177,6 +177,27 @@ type PatchChildrenFn = (
 	isSVG: boolean
 ) => void;
 
+type UnmountFn = (
+	vnode: VNode,
+	parentComponent: ComponentInternalInstance | null,
+	doRemove?: boolean
+) => void;
+
+type UnmountChildrenFn = (
+	children: VNode[],
+	parentComponent: ComponentInternalInstance | null,
+	doRemove?: boolean,
+	start?: number
+) => void;
+
+type MoveFn = (
+	vnode: VNode,
+	container: RendererElement,
+	anchor: RendererNode | null
+) => void;
+
+type RemoveFn = (vnode: VNode) => void;
+
 function baseCreateRenderer<
 	HostNode = RendererNode,
 	HostElement = RendererElement
@@ -192,7 +213,8 @@ function baseCreateRenderer<
 		setText: hostSetText,
 		createElement: hostCreateElement,
 		setElementText: hostSetElementText,
-		patchProp: hostPatchProp
+		patchProp: hostPatchProp,
+		remove: hostRemove
 	} = options;
 
 	const processText: ProcessTextFn = (n1, n2, container, anchor) => {
@@ -278,6 +300,75 @@ function baseCreateRenderer<
 		hostInsert(el, container, anchor);
 	};
 
+	const move: MoveFn = (vnode, container, anchor) => {
+		const { el, children } = vnode;
+
+		// todo 不同的类型
+		if (isArray(children)) {
+			hostInsert(el!, container, anchor);
+			for (let i = 0; i < (children as VNode[]).length; i++) {
+				move((children as VNode[])[i], container, anchor);
+			}
+			hostInsert(vnode.anchor!, container, anchor);
+			return;
+		}
+
+		hostInsert(el!, container, anchor);
+	};
+
+	const remove: RemoveFn = (vnode) => {
+		const { children } = vnode;
+		const removeArr = isArray(children) ? children : [children];
+		(removeArr as VNode[]).forEach((child) => {
+			if (child.type === Comment) {
+				hostRemove(child.el!);
+			} else {
+				remove(child);
+			}
+		});
+	};
+
+	const unmount: UnmountFn = (vnode, parentComponent, doRemove = false) => {
+		/**
+		 * 1. 调用beforeUnmount
+		 * 2. 卸载children
+		 * 3. 子节点卸载完, 再删除当前的
+		 * 4. unmounted 钩子
+		 */
+		const { props, children } = vnode;
+
+		let vnodeHook: VNodeHook | undefined | null;
+		if ((vnodeHook = props && props.onVnodeBeforeUnmount)) {
+			if (isArray(vnodeHook)) {
+				vnodeHook.forEach((hook) => hook(vnode, null as any));
+			}
+		}
+
+		unmountChildren(children as VNode[], parentComponent);
+
+		if (doRemove) {
+			remove(vnode);
+		}
+
+		if ((vnodeHook = props && props.onVnodeUnmounted)) {
+			if (isArray(vnodeHook)) {
+				vnodeHook.forEach((hook) => hook(vnode, null as any));
+			}
+		}
+	};
+
+	const unmountChildren: UnmountChildrenFn = (
+		children,
+		parentComponent,
+		doRemove = false,
+		start = 0
+	) => {
+		// 对每个vnode 执行unmount方法
+		for (let i = start; i < children.length; i++) {
+			unmount(children[i], parentComponent, doRemove);
+		}
+	};
+
 	const patchChildren: PatchChildrenFn = (
 		n1,
 		n2,
@@ -297,7 +388,9 @@ function baseCreateRenderer<
 			// 当前的是个文本, 但是之前的 有多个child
 			if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
 				// todo 卸载以前的children
+				unmountChildren(c1 as VNode[], parentComponent);
 			}
+			// 不是相同文本 直接替换
 			if (c2 !== c1) {
 				hostSetElementText(container, c2 as string);
 			}
@@ -326,7 +419,7 @@ function baseCreateRenderer<
 		// todo patch children
 		patchChildren(n1, n2, el, null, parentComponent, isSVG);
 
-		// tood patch props
+		// todo patch props
 		oldProps;
 	};
 
