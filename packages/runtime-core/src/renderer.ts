@@ -1,5 +1,11 @@
 import { ReactiveEffect } from '@vue/reactivity';
-import { invokeArrayFns, isFunction, ShapeFlags } from '@vue/shared';
+import {
+	EMPTY_OBJ,
+	invokeArrayFns,
+	isFunction,
+	ShapeFlags,
+	isArray
+} from '@vue/shared';
 import { createAppAPI, CreateAppFunction } from './apiCreateApp';
 import {
 	ComponentInternalInstance,
@@ -263,6 +269,31 @@ function baseCreateRenderer<
 		hostInsert(el, container, anchor);
 	};
 
+	const patchElement = (
+		n1: VNode,
+		n2: VNode,
+		parentComponent: ComponentInternalInstance | null,
+		isSVG: boolean
+	) => {
+		const el = (n2.el = n1.el!);
+		const oldProps = n1.props || EMPTY_OBJ;
+		const newProps = n2.props || EMPTY_OBJ;
+		let vnodeHook: VNodeHook | null | undefined;
+
+		if ((vnodeHook = newProps.onVnodeBeforeUpdate)) {
+			if (isArray(vnodeHook)) {
+				vnodeHook.forEach((hook) => hook(n1, n2));
+			} else {
+				vnodeHook(n1, n2);
+			}
+		}
+
+		// todo patch children
+		el;
+		// todo patch props
+		oldProps;
+	};
+
 	const processElement = (
 		n1: VNode | null,
 		n2: VNode,
@@ -276,7 +307,14 @@ function baseCreateRenderer<
 			// 挂载
 			mountElement(n2, container, anchor, parentComponent, isSVG);
 		} else {
-			// 更新
+			// 更新 元素节点
+			/**
+			 * 1. 调用 beforeUpdate 钩子
+			 * 2. patch children
+			 * 3. patch props
+			 * 4. 调用 updated 钩子
+			 */
+			patchElement(n1, n2, parentComponent, isSVG);
 		}
 	};
 
