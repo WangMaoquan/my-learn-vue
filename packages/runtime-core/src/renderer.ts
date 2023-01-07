@@ -168,6 +168,15 @@ type MountChildrenFn = (
 	start?: number
 ) => void;
 
+type PatchChildrenFn = (
+	n1: VNode | null,
+	n2: VNode,
+	container: RendererElement,
+	anchor: RendererNode | null,
+	parentComponent: ComponentInternalInstance | null,
+	isSVG: boolean
+) => void;
+
 function baseCreateRenderer<
 	HostNode = RendererNode,
 	HostElement = RendererElement
@@ -269,6 +278,32 @@ function baseCreateRenderer<
 		hostInsert(el, container, anchor);
 	};
 
+	const patchChildren: PatchChildrenFn = (
+		n1,
+		n2,
+		container,
+		anchor,
+		parentComponent,
+		isSVG
+	) => {
+		const c1 = n1 && n1.children;
+		const prevShapeFlag = n1 ? n1.shapeFlag : 0;
+		const c2 = n2.children;
+
+		const { shapeFlag } = n2;
+
+		// todo 多个子vnode
+		if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+			// 当前的是个文本, 但是之前的 有多个child
+			if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+				// todo 卸载以前的children
+			}
+			if (c2 !== c1) {
+				hostSetElementText(container, c2 as string);
+			}
+		}
+	};
+
 	const patchElement = (
 		n1: VNode,
 		n2: VNode,
@@ -289,8 +324,9 @@ function baseCreateRenderer<
 		}
 
 		// todo patch children
-		el;
-		// todo patch props
+		patchChildren(n1, n2, el, null, parentComponent, isSVG);
+
+		// tood patch props
 		oldProps;
 	};
 
