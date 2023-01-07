@@ -6,7 +6,7 @@ export const svgNS = 'http://www.w3.org/2000/svg';
 // 获取的document对象
 const doc = (typeof document !== 'undefined' ? document : null) as Document;
 
-export const nodeOps: RendererOptions<Node, Element> = {
+export const nodeOps: Omit<RendererOptions<Node, Element>, 'patchProp'> = {
 	insert(child, parent, anchor) {
 		parent.insertBefore(child, anchor || null);
 	},

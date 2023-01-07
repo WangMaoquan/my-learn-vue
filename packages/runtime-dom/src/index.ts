@@ -1,9 +1,10 @@
 import { CreateAppFunction, Renderer, createRenderer } from '@vue/runtime-core';
 import { extend, isString, warn } from '@vue/shared';
 import { nodeOps } from './nodeOps';
+import { patchProp } from './patchProp';
 
 // 这里是浏览器 的rendereroptions
-const rendererOptions = extend({}, nodeOps);
+const rendererOptions = extend({ patchProp }, nodeOps);
 
 // 多次调用createApp时 直接使用第一次创建的
 let renderer: Renderer<Element | ShadowRoot>;
