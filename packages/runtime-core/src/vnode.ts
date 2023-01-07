@@ -2,6 +2,7 @@ import { ReactiveFlags } from '@vue/reactivity';
 import {
 	isArray,
 	isFunction,
+	isNumber,
 	isObject,
 	isString,
 	PatchFlags,
@@ -151,7 +152,6 @@ function _createVNode(
 		patchFlag,
 		dynamicProps,
 		shapeFlag,
-		isBlockNode,
 		true
 	);
 }
@@ -163,7 +163,6 @@ function createBaseVNode(
 	patchFlag = 0,
 	dynamicProps: string[] | null = null,
 	shapeFlag = type === Fragment ? 0 : ShapeFlags.ELEMENT,
-	isBlockNode = false,
 	needFullChildrenNormalization = false
 ) {
 	const vnode = {
@@ -186,9 +185,10 @@ function createBaseVNode(
 	} as VNode;
 
 	if (children) {
-		vnode.shapeFlag |= isString(children)
-			? ShapeFlags.TEXT_CHILDREN
-			: ShapeFlags.ARRAY_CHILDREN;
+		vnode.shapeFlag |=
+			isString(children) || isNumber(children)
+				? ShapeFlags.TEXT_CHILDREN
+				: ShapeFlags.ARRAY_CHILDREN;
 	}
 
 	return vnode;
