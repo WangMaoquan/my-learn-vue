@@ -69,6 +69,15 @@ export interface RendererOptions<
 		start?: HostNode | null,
 		end?: HostNode | null
 	): [HostNode, HostNode];
+	patchProp(
+		el: HostElement,
+		key: string,
+		prevValue: any,
+		nextValue: any,
+		isSVG?: boolean,
+		prevChildren?: VNode<HostNode, HostElement>[],
+		parentComponent?: ComponentInternalInstance | null
+	): void;
 }
 
 /**
@@ -167,7 +176,8 @@ function baseCreateRenderer<
 		createText: hostCreateText,
 		setText: hostSetText,
 		createElement: hostCreateElement,
-		setElementText: hostSetElementText
+		setElementText: hostSetElementText,
+		patchProp: hostPatchProp
 	} = options;
 
 	const processText: ProcessTextFn = (n1, n2, container, anchor) => {
@@ -230,7 +240,25 @@ function baseCreateRenderer<
 				isSVG
 			);
 		}
-		// todo vnode 上的mounted
+		/**
+		 * 处理指令
+		 * 处理 hook
+		 * 处理props
+		 */
+
+		if (props) {
+			for (const key in props) {
+				hostPatchProp(
+					el,
+					key,
+					null,
+					props[key],
+					isSVG,
+					vnode.children as VNode[],
+					parentComponent
+				);
+			}
+		}
 
 		hostInsert(el, container, anchor);
 	};
