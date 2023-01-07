@@ -62,6 +62,7 @@ export interface VNode<
 	HostElement = RendererElement,
 	ExtraProps = { [key: string]: any }
 > {
+	anchor: HostNode | null;
 	__v_isVNode: true; // vnode 标志
 	[ReactiveFlags.SKIP]: true; // 表示不需要被响应式化
 	type: VNodeTypes; // 类型
@@ -181,7 +182,8 @@ function createBaseVNode(
 		dynamicProps,
 		dynamicChildren: null,
 		appContext: null,
-		ctx: currentRenderingInstance
+		ctx: currentRenderingInstance,
+		anchor: null
 	} as VNode;
 
 	if (children) {
@@ -233,6 +235,7 @@ export function cloneVNode<T, U>(
 				? (children as VNode[]).map(deepCloneVNode)
 				: children,
 		shapeFlag: vnode.shapeFlag,
+		anchor: vnode.anchor,
 
 		patchFlag:
 			extraProps && vnode.type !== Fragment
