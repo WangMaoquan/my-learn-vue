@@ -183,6 +183,9 @@ export function createAppAPI<HostElement>(
 						rootProps
 					);
 
+					// 赋值
+					vnode.appContext = context;
+
 					// 调用render
 					render(vnode, rootContainer, isSVG);
 
