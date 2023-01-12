@@ -198,6 +198,13 @@ type MoveFn = (
 
 type RemoveFn = (vnode: VNode) => void;
 
+type ProcessTextOrCommentFn = (
+	n1: VNode | null,
+	n2: VNode,
+	container: RendererElement,
+	anchor: RendererNode | null
+) => void;
+
 function baseCreateRenderer<
 	HostNode = RendererNode,
 	HostElement = RendererElement
@@ -214,7 +221,8 @@ function baseCreateRenderer<
 		createElement: hostCreateElement,
 		setElementText: hostSetElementText,
 		patchProp: hostPatchProp,
-		remove: hostRemove
+		remove: hostRemove,
+		createComment: hostCreateComment
 	} = options;
 
 	const processText: ProcessTextFn = (n1, n2, container, anchor) => {
@@ -540,13 +548,14 @@ function baseCreateRenderer<
 				/**
 				 * 更新
 				 */
+				console.log('update');
 			}
 		};
 
 		// 创建 组件的render effect 并将update 作为scheduler 传入
 		const effect = (instance.effect = new ReactiveEffect(
 			componentUpdateFn,
-			() => update // todo 需要用调度来, 但是我还没实现
+			() => update() // todo 需要用调度来, 但是我还没实现
 		));
 
 		// 组件更新调用的方法
@@ -577,6 +586,26 @@ function baseCreateRenderer<
 		}
 	};
 
+	const processCommentNode: ProcessTextOrCommentFn = (
+		n1,
+		n2,
+		container,
+		anchor
+	) => {
+		// 挂载
+		if (n1 == null) {
+			// 插入
+			hostInsert(
+				(n2.el = hostCreateComment((n2.children as string) || '')),
+				container,
+				anchor
+			);
+		} else {
+			// 更新, 注释节点 直接替换注释就行, 所以直接把 旧的el 复制 给新的el
+			n2.el = n1.el;
+		}
+	};
+
 	/**
 	 * 主要做的 根据新vnode 的类型 执行不同的 process 操作
 	 */
@@ -595,6 +624,7 @@ function baseCreateRenderer<
 				break;
 			case Comment:
 				// todo 注释节点
+				processCommentNode(n1, n2, container, anchor);
 				break;
 			default:
 				if (shapeFlag & ShapeFlags.ELEMENT) {
