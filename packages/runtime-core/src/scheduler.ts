@@ -18,7 +18,7 @@ let isFlushPending = false; // 判断是否 处于等待
 const queue: SchedulerJob[] = []; // 存放调度job的数组
 let flushIndex = 0; // 执行 queue 中对应index 的方法
 
-const resolvedPromise = /*#__PURE__*/ Promise.resolve() as Promise<any>; // 保存resolve方法
+const resolvedPromise = Promise.resolve() as Promise<any>; // 保存resolve方法;
 let currentFlushPromise: Promise<void> | null = null; // 当前执行的promise
 
 const RECURSION_LIMIT = 100; // 一个job 递归的最大次数为100
