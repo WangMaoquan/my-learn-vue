@@ -432,3 +432,10 @@ export function finishComponentSetup(instance: ComponentInternalInstance) {
 		console.warn(`Component is missing template or render function.`);
 	}
 }
+
+export function getComponentName(
+	Component: ConcreteComponent
+): string | false | undefined {
+	// todo functional component
+	return Component.name;
+}
