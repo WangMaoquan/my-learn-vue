@@ -38,6 +38,32 @@ export function watchEffect(
 	return doWatch(effect, null, options);
 }
 
+// ref, compunted
+export function watch<T, Immediate extends Readonly<boolean> = false>(
+	source: WatchSource<T>,
+	cb: WatchCallback<T, Immediate extends true ? T | undefined : T>,
+	options?: WatchOptions<Immediate>
+): WatchStopHandle;
+
+// reactive
+export function watch<
+	T extends object,
+	Immediate extends Readonly<boolean> = false
+>(
+	source: T,
+	cb: WatchCallback<T, Immediate extends true ? T | undefined : T>,
+	options?: WatchOptions<Immediate>
+): WatchStopHandle;
+
+// 实现
+export function watch<T = any, Immediate extends Readonly<boolean> = false>(
+	source: T | WatchSource<T>,
+	cb: any,
+	options?: WatchOptions<Immediate>
+): WatchStopHandle {
+	return doWatch(source as any, cb, options);
+}
+
 const doWatch = (
 	source: WatchSource | WatchEffect | object,
 	cb: WatchCallback | null,
