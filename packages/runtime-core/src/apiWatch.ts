@@ -1,6 +1,8 @@
-import { ReactiveEffect, Ref } from '@vue/reactivity';
-import { EMPTY_OBJ } from '@vue/shared';
+import { isReactive } from './../../reactivity/src/reactive';
+import { isRef, ReactiveEffect, Ref } from '@vue/reactivity';
+import { EMPTY_OBJ, isFunction } from '@vue/shared';
 import { ComputedRef } from 'packages/reactivity/src/computed';
+import { currentInstance } from './component';
 
 type OnCleanup = (cleanupFn: () => void) => void;
 
@@ -48,11 +50,54 @@ const doWatch = (
 	 * scheduler 就根据 options 去生成
 	 */
 
-	const getter = () => {};
+	// 处理非法的source
+	const warnInvalidSource = (s: unknown) => {
+		console.warn(
+			`Invalid watch source: `,
+			s,
+			`A watch source can only be a getter/effect function, a ref, ` +
+				`a reactive object, or an array of these types.`
+		);
+	};
+	const instance = currentInstance;
+
+	let getter: () => any;
+
+	if (isRef(source)) {
+		// 处理ref
+		getter = () => source.value;
+	} else if (isReactive(source)) {
+		// 处理reactive
+		getter = () => source;
+	} else if (isFunction(source)) {
+		// 处理 () => x.value | () => reactiveObj.xx
+
+		if (cb) {
+			getter = () => (source as () => any)();
+		} else {
+			getter = () => {
+				if (instance && instance.isUnmounted) {
+					return;
+				}
+				if (cleanup) {
+					cleanup();
+				}
+				return source(onCleanup);
+			};
+		}
+	}
+
+	let cleanup: () => void;
+	let onCleanup: OnCleanup = (fn: () => void) => {
+		// onCleanup 原理就是 在执行 effect.stop时 触发 onStop
+		cleanup = effect.onStop = () => {
+			fn();
+		};
+	};
 
 	const job = () => {};
 
-	const effect = new ReactiveEffect(getter, job);
+	const effect = new ReactiveEffect(getter!, job);
 
 	// init 执行 cb
 	if (cb) {
