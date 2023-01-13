@@ -1,6 +1,20 @@
-import { isReactive } from './../../reactivity/src/reactive';
-import { isRef, ReactiveEffect, Ref } from '@vue/reactivity';
-import { EMPTY_OBJ, isFunction, hasChanged, NOOP } from '@vue/shared';
+import {
+	isRef,
+	ReactiveEffect,
+	Ref,
+	ReactiveFlags,
+	isReactive
+} from '@vue/reactivity';
+import {
+	EMPTY_OBJ,
+	isFunction,
+	hasChanged,
+	NOOP,
+	isArray,
+	isSet,
+	isMap,
+	isPlainObject
+} from '@vue/shared';
 import { ComputedRef } from 'packages/reactivity/src/computed';
 import { currentInstance } from './component';
 
@@ -98,6 +112,7 @@ const doWatch = (
 	} else if (isReactive(source)) {
 		// 处理reactive
 		getter = () => source;
+		deep = true;
 	} else if (isFunction(source)) {
 		// 处理 () => x.value | () => reactiveObj.xx
 
@@ -117,6 +132,12 @@ const doWatch = (
 	} else {
 		getter = NOOP;
 		__DEV__ && warnInvalidSource(source);
+	}
+
+	if (cb && deep) {
+		// deep 需要深度监听 也即是我们还要把 对象里面的key 都要收集依赖
+		const baseGetter = getter;
+		getter = () => traverse(baseGetter());
 	}
 
 	let cleanup: () => void;
@@ -171,4 +192,37 @@ const doWatch = (
 	};
 
 	return stopWatch;
+};
+
+// 遍历 对象的 方法, seem 保存每个value 的set
+const traverse = (value: unknown, seen?: Set<unknown>) => {
+	if (!isReactive(value) || (value as any)[ReactiveFlags.SKIP]) {
+		return value;
+	}
+	seen = seen || new Set();
+	if (seen.has(value)) {
+		return value;
+	}
+	seen.add(value);
+
+	if (isRef(value)) {
+		// 处理ref 通过value.value 触发track
+		traverse(value.value, seen);
+	} else if (isArray(value)) {
+		// 处理数组
+		for (let i = 0; i < value.length; i++) {
+			traverse(value[i], seen);
+		}
+	} else if (isSet(value) || isMap(value)) {
+		// 处理 map set
+		value.forEach((v: any) => {
+			traverse(v, seen);
+		});
+	} else if (isPlainObject(value)) {
+		// 处理 object
+		for (const key in value) {
+			traverse((value as any)[key], seen);
+		}
+	}
+	return value;
 };
