@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script src="../dist/vue/index.js"></script>
+  <script>
+    console.log(Vue)
+    const {
+      createApp,
+      defineComponent,
+      reactive,
+      h,
+      inject,
+      provide,
+      watchEffect,
+      watch,
+      ref,
+      computed
+    } = Vue;
+    const App = defineComponent({
+      name: 'app',
+      setup() {
+        const state = reactive({
+          age: "1"
+        })
+
+        const count = ref(1);
+
+        const computedCount = computed(() => count.value * 2)
+
+        setTimeout(() => {
+          state.age = 2;
+          count.value = 2;
+        }, 10000)
+
+        watch(() => state.age, (newV, oldV) => {
+          console.log('function')
+          console.log(newV, oldV)
+        })
+
+        watch(state, (newV, oldV) => {
+          console.log('reactive')
+          console.log(newV, oldV)
+        })
+
+        watch(count, (newV, oldV) => {
+          console.log('ref')
+          console.log(newV, oldV)
+        })
+
+        watch(computedCount, (newV, oldV) => {
+          console.log('computed')
+          console.log(newV, oldV)
+        })
+
+
+        watchEffect(() => {
+          console.log(state.age, 'watchEffect')
+        })
+
+        return () => h('div', null, [h('span', state.age)])
+      }
+    })
+    createApp(App).mount('#app')
+  </script>
+</body>
+
+</html>
