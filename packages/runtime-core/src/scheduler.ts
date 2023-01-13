@@ -25,7 +25,6 @@ const RECURSION_LIMIT = 100; // 一个job 递归的最大次数为100
 type CountMap = Map<SchedulerJob, number>; // 保存 job 对应 count 的map
 
 // 执行 queue 中job 的方法
-// @ts-ignore
 function queueFlush() {
 	if (!isFlushing && !isFlushPending) {
 		isFlushPending = true; // 标记true
@@ -94,4 +93,46 @@ function flushJobs(seen?: CountMap) {
 		isFlushing = false; // 执行完了
 		currentFlushPromise = null; // 重置
 	}
+}
+
+const findInsertionIndex = (id: number) => {
+	let start = flushIndex + 1; // 从已经开始执行的index+1 开始插入
+	let end = queue.length;
+
+	// 二分查找
+	while (start < end) {
+		const middle = (start + end) >>> 1;
+		const middleJobId = getId(queue[middle]);
+		middleJobId < id ? (start = middle + 1) : (end = middle);
+	}
+
+	return start;
+};
+
+export function queueJob(job: SchedulerJob) {
+	// queue 不为空 或者 如果job循序递归 就从 flushIndex + 1, 否则 就是 flashIndex
+	//  第二个判断主要应对的是, 父组件provide 一个 值, 子组件inject 拿到这个值, 然后改变, 但是此时 子组件 引发 父组件的重新更新
+	if (
+		!queue.length ||
+		!queue.includes(
+			job,
+			isFlushing && job.allowRecurse ? flushIndex + 1 : flushIndex
+		)
+	) {
+		if (job.id == null) {
+			queue.push(job);
+		} else {
+			// 保证 job.id 小的在前
+			queue.splice(findInsertionIndex(job.id), 0, job);
+		}
+		queueFlush();
+	}
+}
+
+export function nextTick<T = void>(
+	this: T,
+	fn?: (this: T) => void
+): Promise<void> {
+	const p = currentFlushPromise || resolvedPromise;
+	return fn ? p.then(this ? fn.bind(this) : fn) : p;
 }
