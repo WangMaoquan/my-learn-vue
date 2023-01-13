@@ -1,8 +1,11 @@
 import { isReactive } from './../../reactivity/src/reactive';
 import { isRef, ReactiveEffect, Ref } from '@vue/reactivity';
-import { EMPTY_OBJ, isFunction } from '@vue/shared';
+import { EMPTY_OBJ, isFunction, hasChanged } from '@vue/shared';
 import { ComputedRef } from 'packages/reactivity/src/computed';
 import { currentInstance } from './component';
+
+// 初始值
+const INITIAL_WATCHER_VALUE = {};
 
 type OnCleanup = (cleanupFn: () => void) => void;
 
@@ -94,8 +97,31 @@ const doWatch = (
 			fn();
 		};
 	};
-
-	const job = () => {};
+	// 传给 cb 值
+	let oldValue: any = INITIAL_WATCHER_VALUE;
+	const job = () => {
+		// effect 是否被 停止
+		if (!effect.active) {
+			return;
+		}
+		if (cb) {
+			// 获取最新的值
+			const newValue = effect.run();
+			// 深度监听 或者 值发生变化
+			if (deep || hasChanged(newValue, oldValue)) {
+				// 执行cb
+				cb(
+					newValue,
+					oldValue === INITIAL_WATCHER_VALUE ? undefined : oldValue,
+					onCleanup
+				);
+			}
+			// 记得将newValue 赋值给 oldValue
+			oldValue = newValue;
+		} else {
+			effect.run();
+		}
+	};
 
 	const effect = new ReactiveEffect(getter!, job);
 
@@ -103,6 +129,8 @@ const doWatch = (
 	if (cb) {
 		if (immediate) {
 			job();
+		} else {
+			oldValue = effect.run();
 		}
 	} else {
 		effect.run();
