@@ -1,6 +1,6 @@
 import { isReactive } from './../../reactivity/src/reactive';
 import { isRef, ReactiveEffect, Ref } from '@vue/reactivity';
-import { EMPTY_OBJ, isFunction, hasChanged } from '@vue/shared';
+import { EMPTY_OBJ, isFunction, hasChanged, NOOP } from '@vue/shared';
 import { ComputedRef } from 'packages/reactivity/src/computed';
 import { currentInstance } from './component';
 
@@ -88,6 +88,9 @@ const doWatch = (
 				return source(onCleanup);
 			};
 		}
+	} else {
+		getter = NOOP;
+		__DEV__ && warnInvalidSource(source);
 	}
 
 	let cleanup: () => void;
