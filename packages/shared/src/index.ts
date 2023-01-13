@@ -37,6 +37,9 @@ export const isObject = (val: unknown): val is Record<any, any> =>
 export const isFunction = (val: unknown): val is Function =>
 	typeof val === 'function';
 
+export const isPlainObject = (val: unknown): val is object =>
+	toTypeString(val) === '[object Object]';
+
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 export const hasOwn = (
 	val: object,
