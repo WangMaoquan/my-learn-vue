@@ -1,4 +1,4 @@
-import { NOOP } from '@vue/shared';
+import { isArray, NOOP } from '@vue/shared';
 import { ComponentInternalInstance, getComponentName } from './component';
 
 export interface SchedulerJob extends Function {
@@ -20,6 +20,10 @@ let flushIndex = 0; // 执行 queue 中对应index 的方法
 
 const resolvedPromise = Promise.resolve() as Promise<any>; // 保存resolve方法;
 let currentFlushPromise: Promise<void> | null = null; // 当前执行的promise
+
+const pendingPostFlushCbs: SchedulerJob[] = []; // flush 为post 的
+let activePostFlushCbs: SchedulerJob[] | null = null; // 当前的 post
+let postFlushIndex = 0; // post 下标
 
 const RECURSION_LIMIT = 100; // 一个job 递归的最大次数为100
 type CountMap = Map<SchedulerJob, number>; // 保存 job 对应 count 的map
@@ -90,6 +94,10 @@ function flushJobs(seen?: CountMap) {
 	} finally {
 		flushIndex = 0; // 重置 index
 		queue.length = 0; // 重置queue
+
+		// flush 为post 的执行顺序在 flush 为sync(默认) 后
+		flushPostFlushCbs(seen);
+
 		isFlushing = false; // 执行完了
 		currentFlushPromise = null; // 重置
 	}
@@ -135,4 +143,59 @@ export function nextTick<T = void>(
 ): Promise<void> {
 	const p = currentFlushPromise || resolvedPromise;
 	return fn ? p.then(this ? fn.bind(this) : fn) : p;
+}
+
+export function queuePostFlushCb(cb: SchedulerJobs) {
+	if (!isArray(cb)) {
+		if (
+			!activePostFlushCbs ||
+			!activePostFlushCbs.includes(
+				cb,
+				cb.allowRecurse ? postFlushIndex + 1 : postFlushIndex
+			)
+		) {
+			pendingPostFlushCbs.push(cb);
+		}
+	} else {
+		// 只有 生命周期 函数 才会是数组
+		pendingPostFlushCbs.push(...cb);
+	}
+	queueFlush();
+}
+
+export function flushPostFlushCbs(seen?: CountMap) {
+	if (pendingPostFlushCbs.length) {
+		// 去重 加 赋值
+		const deduped = [...new Set(pendingPostFlushCbs)];
+		// 清除 pendingCbs
+		pendingPostFlushCbs.length = 0;
+
+		// 赋值 activePostCbs
+		activePostFlushCbs = deduped;
+		if (__DEV__) {
+			seen = seen || new Map();
+		}
+
+		// 排序
+		activePostFlushCbs.sort((a, b) => getId(a) - getId(b));
+
+		// 循环执行
+		for (
+			postFlushIndex = 0;
+			postFlushIndex < activePostFlushCbs.length;
+			postFlushIndex++
+		) {
+			if (
+				__DEV__ &&
+				checkRecursiveUpdates(seen!, activePostFlushCbs[postFlushIndex])
+			) {
+				continue;
+			}
+			activePostFlushCbs[postFlushIndex]();
+		}
+		// 重置 为null
+		activePostFlushCbs = null;
+		// 重置为0
+		postFlushIndex = 0;
+	}
 }
