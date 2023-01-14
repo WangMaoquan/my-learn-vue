@@ -3,7 +3,8 @@ import {
 	ReactiveEffect,
 	Ref,
 	ReactiveFlags,
-	isReactive
+	isReactive,
+	EffectScheduler
 } from '@vue/reactivity';
 import {
 	EMPTY_OBJ,
@@ -17,6 +18,7 @@ import {
 } from '@vue/shared';
 import { ComputedRef } from 'packages/reactivity/src/computed';
 import { currentInstance } from './component';
+import { queuePostFlushCb } from './scheduler';
 
 // 初始值
 const INITIAL_WATCHER_VALUE = {};
@@ -173,7 +175,16 @@ const doWatch = (
 		}
 	};
 
-	const effect = new ReactiveEffect(getter!, job);
+	let scheduler: EffectScheduler;
+	if (flush === 'sync') {
+		scheduler = job as any;
+	} else if (flush === 'post') {
+		scheduler = () => queuePostFlushCb(job);
+	} else {
+		// todo pre
+	}
+
+	const effect = new ReactiveEffect(getter!, scheduler!);
 
 	// init 执行 cb
 	if (cb) {

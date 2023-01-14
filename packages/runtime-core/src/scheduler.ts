@@ -95,7 +95,7 @@ function flushJobs(seen?: CountMap) {
 		flushIndex = 0; // 重置 index
 		queue.length = 0; // 重置queue
 
-		// flush 为post 的执行顺序在 flush 为sync(默认) 后
+		// flush 为post 的执行顺序在 flush 为sync后
 		flushPostFlushCbs(seen);
 
 		isFlushing = false; // 执行完了
