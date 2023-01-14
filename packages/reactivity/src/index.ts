@@ -38,6 +38,7 @@ export {
 	pauseTracking,
 	ITERATE_KEY,
 	ReactiveEffect,
-	ReactiveEffectRunner
+	ReactiveEffectRunner,
+	EffectScheduler
 } from './effect';
 export { TrackOpTypes, TriggerOpTypes } from './operations';
