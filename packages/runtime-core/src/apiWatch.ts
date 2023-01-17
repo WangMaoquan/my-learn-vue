@@ -18,7 +18,7 @@ import {
 } from '@vue/shared';
 import { ComputedRef } from 'packages/reactivity/src/computed';
 import { currentInstance } from './component';
-import { queuePostFlushCb } from './scheduler';
+import { queueJob, queuePostFlushCb } from './scheduler';
 
 // 初始值
 const INITIAL_WATCHER_VALUE = {};
@@ -182,6 +182,9 @@ const doWatch = (
 		scheduler = () => queuePostFlushCb(job);
 	} else {
 		// todo pre
+		job.pre = true;
+		if (instance) job.id = instance.uid;
+		scheduler = () => queueJob(job);
 	}
 
 	const effect = new ReactiveEffect(getter!, scheduler!);
