@@ -18,6 +18,11 @@ import {
 } from '@vue/shared';
 import { ComputedRef } from 'packages/reactivity/src/computed';
 import { currentInstance } from './component';
+import {
+	callWithAsyncErrorHandling,
+	callWithErrorHandling,
+	ErrorCodes
+} from './errorHandling';
 import { queueJob, queuePostFlushCb } from './scheduler';
 
 // 初始值
@@ -119,7 +124,8 @@ const doWatch = (
 		// 处理 () => x.value | () => reactiveObj.xx
 
 		if (cb) {
-			getter = () => (source as () => any)();
+			getter = () =>
+				callWithErrorHandling(source, instance, ErrorCodes.WATCH_GETTER);
 		} else {
 			getter = () => {
 				if (instance && instance.isUnmounted) {
@@ -128,7 +134,12 @@ const doWatch = (
 				if (cleanup) {
 					cleanup();
 				}
-				return source(onCleanup);
+				return callWithAsyncErrorHandling(
+					source,
+					instance,
+					ErrorCodes.WATCH_CALLBACK,
+					[onCleanup]
+				);
 			};
 		}
 	} else {
