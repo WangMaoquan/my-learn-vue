@@ -1,5 +1,6 @@
 import { isArray, NOOP } from '@vue/shared';
 import { ComponentInternalInstance, getComponentName } from './component';
+import { callWithErrorHandling, ErrorCodes } from './errorHandling';
 
 export interface SchedulerJob extends Function {
 	id?: number; // id 后面会根据这个id 排序
@@ -88,7 +89,7 @@ function flushJobs(seen?: CountMap) {
 				if (__DEV__ && check(job)) {
 					continue;
 				}
-				job();
+				callWithErrorHandling(job, null, ErrorCodes.SCHEDULER);
 			}
 		}
 	} finally {
