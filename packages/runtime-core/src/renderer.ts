@@ -681,7 +681,6 @@ function baseCreateRenderer<
 		let e1 = c1.length - 1; // 旧的endindex
 		let e2 = l2 - 1; // 新的endindex
 
-		// 1. sync from start
 		// (a b) c
 		// (a b) d e
 		while (i <= e1 && i <= e2) {
@@ -695,23 +694,37 @@ function baseCreateRenderer<
 			i++;
 		}
 
-		/**
-		 * 从头遍历
-		 * 新的还有多的, 但是 旧中没有 直接 mount
-		 */
+		// a (b c)
+		// e d (b c)
+		while (i <= e1 && i <= e2) {
+			const n1 = c1[e1];
+			const n2 = (c2[e2] = normalizeVNode(c2[e2]));
+			if (isSameVNodeType(n1, n2)) {
+				patch(n1, n2, container, null, parentComponent, isSVG);
+			} else {
+				break;
+			}
+			e1--;
+			e2--;
+		}
+
+		// 头遍历 i 小于 e2 说明中间还有未挂载的
 		if (i <= e2) {
-			const nextPos = e2 + 1;
-			const anchor = nextPos < l2 ? (c2[nextPos] as VNode).el : parentAnchor;
-			while (i <= e2) {
-				patch(
-					null,
-					(c2[i] = normalizeVNode(c2[i])),
-					container,
-					anchor,
-					parentComponent,
-					isSVG
-				);
-				i++;
+			// 尾巴遍历 新的前面还有为挂载的
+			if (i > e1) {
+				const nextPos = e2 + 1;
+				const anchor = nextPos < l2 ? (c2[nextPos] as VNode).el : parentAnchor;
+				while (i <= e2) {
+					patch(
+						null,
+						(c2[i] = normalizeVNode(c2[i])),
+						container,
+						anchor,
+						parentComponent,
+						isSVG
+					);
+					i++;
+				}
 			}
 		}
 	};

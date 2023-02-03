@@ -24,12 +24,26 @@
 					// return () =>
 					// 	change.value ? h('p', [h('p', 'arr1'), h('p', 'arr2')]): h('p', 'newtext');
 
-					// diff case 1 从两端开始比
+					// diff case 1 从start端开始比
+					// return () =>
+					// 	change.value
+					// 		? h('p', [
+					// 				h('p', { key: 'arr1' }, 'arr1'),
+					// 				h('p', { key: 'arr2' }, 'arr2')
+					// 		  ])
+					// 		: h('p', [
+					// 				h('p', { key: 'arr1' }, 'arr1'),
+					// 				h('p', { key: 'arr2' }, 'arr2'),
+					// 				h('p', { key: 'arr3' }, 'arr3'),
+					// 				h('p', { key: 'arr4' }, 'arr4')
+					// 		  ]);
+
+					// diff case 2 从 end端开始比
 					return () =>
 						change.value
 							? h('p', [
-									h('p', { key: 'arr1' }, 'arr1'),
-									h('p', { key: 'arr2' }, 'arr2')
+									h('p', { key: 'arr3' }, 'arr3'),
+									h('p', { key: 'arr4' }, 'arr4')
 							  ])
 							: h('p', [
 									h('p', { key: 'arr1' }, 'arr1'),
