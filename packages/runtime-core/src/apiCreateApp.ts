@@ -27,6 +27,13 @@ export interface AppConfig {
 	// 全局方法/属性的存放处
 	globalProperties: Record<string, any>;
 
+	// 用户自定义的 errorhandle
+	errorHandler?: (
+		err: unknown,
+		instance: ComponentPublicInstance | null,
+		info: string
+	) => void;
+
 	// 是否是 自定义元素的方法 比如 (tag) => tag.startWith('d-') 这样d- 开头的就是我们自定义的
 	isCustomElement?: (tag: string) => boolean;
 }
