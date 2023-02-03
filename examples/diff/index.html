@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+	<body>
+		<div id="app"></div>
+		<script src="../../dist/vue/index.js"></script>
+		<script>
+			const { createApp, defineComponent, ref, h } = Vue;
+
+			const BaseDiffDemo = defineComponent({
+				setup() {
+					const change = ref(true);
+					window.change = change;
+					// return () => (change.value ? h('p', 'oldtext') : h('p', 'newtext'));
+					// return () =>
+					// 	change.value
+					// 		? h('p', 'oldtext')
+					// 		: h('p', [h('p', 'arr1'), h('p', 'arr2')]);
+					// return () =>
+					// 	change.value ? h('p', [h('p', 'arr1'), h('p', 'arr2')]): h('p', 'newtext');
+					return () =>
+						change.value
+							? h('p', [
+									h('p', { key: 'arr1' }, 'arr1'),
+									h('p', { key: 'arr2' }, 'arr2')
+							  ])
+							: h('p', [
+									h('p', { key: 'arr1' }, 'arr1'),
+									h('p', { key: 'arr2' }, 'arr2'),
+									h('p', { key: 'arr3' }, 'arr3'),
+									h('p', { key: 'arr4' }, 'arr4')
+							  ]);
+				}
+			});
+			createApp(BaseDiffDemo).mount('#app');
+		</script>
+	</body>
+</html>
