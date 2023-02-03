@@ -10,6 +10,7 @@ import {
 	EMPTY_OBJ,
 	isFunction,
 	isObject,
+	isPromise,
 	makeMap,
 	NO,
 	NOOP,
@@ -30,6 +31,7 @@ import { currentRenderingInstance } from './componentRenderContext';
 import { markAttrsAccessed } from './componentRenderUtils';
 import { InternalSlots, Slots } from './componentSlots';
 import { Directive, validateDirectiveName } from './directives';
+import { callWithErrorHandling, ErrorCodes } from './errorHandling';
 import { SchedulerJob } from './scheduler';
 import { isVNode, VNode, VNodeChild } from './vnode';
 
@@ -319,12 +321,22 @@ function setupStatefulComponent(instance: ComponentInternalInstance) {
 		// 暂停依赖收集
 		pauseTracking();
 		// 拿到 setup返回结果
-		const setupResult = setup(shallowReadonly(instance.props), setupContext!);
-		// 执行处理 setupResult的方法
-		handleSetupResult(instance, setupResult);
+		const setupResult = callWithErrorHandling(
+			setup,
+			instance,
+			ErrorCodes.SETUP_FUNCTION,
+			[__DEV__ ? shallowReadonly(instance.props) : instance.props, setupContext]
+		);
 		// 恢复
 		resetTracking();
 		unsetCurrentInstance();
+
+		if (isPromise(setupResult)) {
+			// todo 处理 setup返回为promise 的情况
+		} else {
+			// 执行处理 setupResult的方法
+			handleSetupResult(instance, setupResult);
+		}
 	} else {
 		finishComponentSetup(instance);
 	}
