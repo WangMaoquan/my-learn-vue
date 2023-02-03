@@ -198,6 +198,8 @@ type MoveFn = (
 
 type RemoveFn = (vnode: VNode) => void;
 
+type NextFn = (vnode: VNode) => RendererNode | null;
+
 type ProcessTextOrCommentFn = (
 	n1: VNode | null,
 	n2: VNode,
@@ -222,7 +224,9 @@ function baseCreateRenderer<
 		setElementText: hostSetElementText,
 		patchProp: hostPatchProp,
 		remove: hostRemove,
-		createComment: hostCreateComment
+		createComment: hostCreateComment,
+		parentNode: hostParentNode,
+		nextSibling: hostNextSibling
 	} = options;
 
 	const processText: ProcessTextFn = (n1, n2, container, anchor) => {
@@ -352,7 +356,9 @@ function baseCreateRenderer<
 			}
 		}
 
-		unmountChildren(children as VNode[], parentComponent);
+		if (isArray(children)) {
+			unmountChildren(children as VNode[], parentComponent);
+		}
 
 		if (doRemove) {
 			remove(vnode);
@@ -579,6 +585,23 @@ function baseCreateRenderer<
 				 * 更新
 				 */
 				console.log('update');
+				toggleRecurse(instance, false);
+				/**
+				 * beforeupdate 钩子
+				 * vnode 的beforeupdate 钩子
+				 */
+				toggleRecurse(instance, true);
+				const nextTree = renderComponentRoot(instance);
+				const prevTree = instance.subTree;
+				instance.subTree = nextTree;
+				patch(
+					prevTree,
+					nextTree,
+					hostParentNode(prevTree.el!)!,
+					getNextHostNode(prevTree),
+					instance,
+					isSVG
+				);
 			}
 		};
 
@@ -665,6 +688,13 @@ function baseCreateRenderer<
 					console.warn(`为实现的type: ${String(type)}`);
 				}
 		}
+	};
+
+	const getNextHostNode: NextFn = (vnode) => {
+		if (vnode.shapeFlag & ShapeFlags.COMPONENT) {
+			return getNextHostNode(vnode.component!.subTree);
+		}
+		return hostNextSibling((vnode.anchor || vnode.el)!);
 	};
 
 	const render: RootRenderFunction = (vnode, container, isSVG) => {
