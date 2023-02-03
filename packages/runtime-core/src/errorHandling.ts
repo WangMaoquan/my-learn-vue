@@ -1,4 +1,3 @@
-import { VNode } from './vnode';
 import { ComponentInternalInstance } from './component';
 import { isPromise, isFunction } from '@vue/shared';
 import { LifecycleHooks } from './enums';
