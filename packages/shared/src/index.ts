@@ -37,6 +37,13 @@ export const isObject = (val: unknown): val is Record<any, any> =>
 export const isFunction = (val: unknown): val is Function =>
 	typeof val === 'function';
 
+/**
+ * 简单校验是否是对象 是否有then 是否有catch
+ */
+export const isPromise = <T = any>(val: unknown): val is Promise<T> => {
+	return isObject(val) && isFunction(val.then) && isFunction(val.catch);
+};
+
 export const isPlainObject = (val: unknown): val is object =>
 	toTypeString(val) === '[object Object]';
 
