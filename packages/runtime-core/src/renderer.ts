@@ -15,6 +15,7 @@ import {
 import { renderComponentRoot } from './componentRenderUtils';
 import { SchedulerJob } from './scheduler';
 import {
+	isSameVNodeType,
 	normalizeVNode,
 	VNode,
 	VNodeArrayChildren,
@@ -419,6 +420,14 @@ function baseCreateRenderer<
 			// 都是数组
 			if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
 				// todo
+				patchKeyedChildren(
+					c1 as VNode[],
+					c2 as VNodeArrayChildren,
+					container,
+					anchor,
+					parentComponent,
+					isSVG
+				);
 			} else {
 				// 直接卸载旧的
 				unmountChildren(c1 as VNode[], parentComponent);
@@ -656,6 +665,54 @@ function baseCreateRenderer<
 		} else {
 			// 更新, 注释节点 直接替换注释就行, 所以直接把 旧的el 复制 给新的el
 			n2.el = n1.el;
+		}
+	};
+
+	const patchKeyedChildren = (
+		c1: VNode[],
+		c2: VNodeArrayChildren,
+		container: RendererElement,
+		parentAnchor: RendererNode | null,
+		parentComponent: ComponentInternalInstance | null,
+		isSVG: boolean
+	) => {
+		let i = 0;
+		const l2 = c2.length; // 新的长度
+		let e1 = c1.length - 1; // 旧的endindex
+		let e2 = l2 - 1; // 新的endindex
+
+		// 1. sync from start
+		// (a b) c
+		// (a b) d e
+		while (i <= e1 && i <= e2) {
+			const n1 = c1[i];
+			const n2 = (c2[i] = normalizeVNode(c2[i]));
+			if (isSameVNodeType(n1, n2)) {
+				patch(n1, n2, container, null, parentComponent, isSVG);
+			} else {
+				break;
+			}
+			i++;
+		}
+
+		/**
+		 * 从头遍历
+		 * 新的还有多的, 但是 旧中没有 直接 mount
+		 */
+		if (i <= e2) {
+			const nextPos = e2 + 1;
+			const anchor = nextPos < l2 ? (c2[nextPos] as VNode).el : parentAnchor;
+			while (i <= e2) {
+				patch(
+					null,
+					(c2[i] = normalizeVNode(c2[i])),
+					container,
+					anchor,
+					parentComponent,
+					isSVG
+				);
+				i++;
+			}
 		}
 	};
 
