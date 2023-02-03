@@ -391,7 +391,14 @@ function baseCreateRenderer<
 
 		const { shapeFlag } = n2;
 
-		// todo 多个子vnode
+		/**
+		 * 我们要明白 只会存在 text_children / array_children
+		 * 1. 旧的是text, 新的是array 类型不一样 卸载旧的 挂载新的
+		 * 2. 旧的是text, 新的也是text 直接替换
+		 * 3. 旧的是array, 新的是text 卸载旧的 挂载新的
+		 * 4. 旧的是array, 新的也是array diff
+		 */
+
 		if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
 			// 当前的是个文本, 但是之前的 有多个child
 			if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
@@ -401,6 +408,29 @@ function baseCreateRenderer<
 			// 不是相同文本 直接替换
 			if (c2 !== c1) {
 				hostSetElementText(container, c2 as string);
+			}
+		} else if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+			// 都是数组
+			if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+				// todo
+			} else {
+				// 直接卸载旧的
+				unmountChildren(c1 as VNode[], parentComponent);
+			}
+		} else {
+			// 旧的是 文本, 新的是array
+			if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+				hostSetElementText(container, '');
+			}
+			// 直接挂载新的
+			if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+				mountChildren(
+					c2 as VNodeArrayChildren,
+					container,
+					anchor,
+					parentComponent,
+					isSVG
+				);
 			}
 		}
 	};
