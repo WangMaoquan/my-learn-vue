@@ -734,6 +734,66 @@ function baseCreateRenderer<
 				unmount(c1[i], parentComponent, true);
 				i++;
 			}
+		} else {
+			/**
+			 * 处理中间部分
+			 * 1. 寻找能复用的
+			 * 2. 删除旧的不存在的
+			 * 3. 增加新的未插入的
+			 */
+			const s1 = i; // 用于遍历旧的其实index
+			const s2 = i; // 用于遍历新的起始index
+
+			// newChildren 每一项的key 对应的 index map
+			const keyToNewIndexMap: Map<string | number | symbol, number> = new Map();
+
+			// 生成 keyToNewIndexMap
+			for (i = s2; i <= e2; i++) {
+				const nextChild = normalizeVNode(c2[i]);
+				if (nextChild.key != null) {
+					if (keyToNewIndexMap.has(nextChild.key)) {
+						console.warn(
+							`Duplicate keys found during update:`,
+							JSON.stringify(nextChild.key),
+							`Make sure keys are unique.`
+						);
+					}
+					keyToNewIndexMap.set(nextChild.key, i);
+				}
+			}
+
+			// 卸载旧的中没能被复用的 vnode
+			for (i = s1; i <= e1; i++) {
+				const prevChild = c1[i];
+				let newIndex: number | undefined;
+				// 判断是否能复用
+				if (prevChild.key != null) {
+					newIndex = keyToNewIndexMap.get(prevChild.key);
+				} else {
+					// 没有复用的 需要在新的中再遍历一次 也就是没有key 的情况
+					for (let j = s2; j < e2; j++) {
+						if (isSameVNodeType(prevChild, c2[j] as VNode)) {
+							newIndex = j;
+							// 找到了就break
+							break;
+						}
+					}
+				}
+				// 不存在就卸载
+				if (newIndex === undefined) {
+					unmount(prevChild, parentComponent, true);
+				} else {
+					// 存在就去复用
+					patch(
+						prevChild,
+						c2[newIndex] as VNode,
+						container,
+						null,
+						parentComponent,
+						isSVG
+					);
+				}
+			}
 		}
 	};
 
