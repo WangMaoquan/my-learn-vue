@@ -4,7 +4,8 @@ import {
 	invokeArrayFns,
 	isFunction,
 	ShapeFlags,
-	isArray
+	isArray,
+	EMPTY_ARR
 } from '@vue/shared';
 import { createAppAPI, CreateAppFunction } from './apiCreateApp';
 import {
@@ -766,6 +767,8 @@ function baseCreateRenderer<
 			let patched = 0; // 新中patch 的数量用于 优化处理 当新的patch完了, 旧的其实就不用遍历了, 直接unmount
 			const toBePatched = e2 - s2 + 1; // 新中需要被patch的数量
 			const newIndexToOldIndexMap = new Array(toBePatched); // 新中index 对应的 旧中的index
+			let moved = false; // vnode是否需要移动
+			let maxNewIndexSoFar = 0; // 记录最大下标
 			for (i = 0; i < toBePatched; i++) newIndexToOldIndexMap[i] = 0; // 初始化为0
 			// 卸载旧的中没能被复用的 vnode
 			for (i = s1; i <= e1; i++) {
@@ -798,6 +801,11 @@ function baseCreateRenderer<
 					// 这里是复用逻辑, 说明可以 修改 newIndexToOldIndexMap
 					// newIndexToOldIndexMap 是从 0 开始的, 所以需要 newIndex - s2
 					newIndexToOldIndexMap[newIndex - s2] = i + 1; // 因为i 可能为0 所以 + 1
+					if (newIndex >= maxNewIndexSoFar) {
+						maxNewIndexSoFar = newIndex;
+					} else {
+						moved = true;
+					}
 					// 存在就去复用
 					patch(
 						prevChild,
@@ -828,8 +836,17 @@ function baseCreateRenderer<
 			 * [5, 3, 4] 这是生成的映射 因为 + 1
 			 */
 
-			// 生成最长递增子序列
-			const increasingNewIndexSequence = getSequence(newIndexToOldIndexMap);
+			/**
+			 * 生成最长递增子序列
+			 * 最长递增子序列是需要时间的 所以我们需要判断 是否需要moved
+			 * 怎么判断是否需要moved
+			 * 要移动 说明能复用 复用的话我们是不是需要 知道 对应在 newChildren 的下标
+			 * 遍历旧的 keyToNewIndexMap[c1[i].key] 这里拿出来的就是 对应的下标 如果不需要移动的话 是不是一个递增的
+			 * 比如 1 2 3 这种, 但是实际上 我们是 2 3 1 [c d e] 当取到 e 时 1 < 3 所以 e 是需要move的
+			 */
+			const increasingNewIndexSequence = moved
+				? getSequence(newIndexToOldIndexMap)
+				: EMPTY_ARR;
 			let j = increasingNewIndexSequence.length - 1;
 			/**
 			 * 为啥这里需要倒着插, 倒着插入一定是最稳定 不会存在前一个也是一个可能位置不对的元素
@@ -849,12 +866,13 @@ function baseCreateRenderer<
 				if (newIndexToOldIndexMap[i] === 0) {
 					// 为0 说明是新的 直接mount
 					patch(null, nextChild, container, anchor, parentComponent, isSVG);
-				}
-				// 移动
-				if (i !== increasingNewIndexSequence[j]) {
-					move(nextChild, container, anchor);
-				} else {
-					j--;
+				} else if (moved) {
+					// 移动
+					if (i !== increasingNewIndexSequence[j]) {
+						move(nextChild, container, anchor);
+					} else {
+						j--;
+					}
 				}
 			}
 		}
