@@ -762,10 +762,19 @@ function baseCreateRenderer<
 				}
 			}
 
+			let patched = 0; // 新中patch 的数量用于 优化处理 当新的patch完了, 旧的其实就不用遍历了, 直接unmount
+			const toBePatched = e2 - s2 + 1; // 新中需要被patch的数量
 			// 卸载旧的中没能被复用的 vnode
 			for (i = s1; i <= e1; i++) {
 				const prevChild = c1[i];
 				let newIndex: number | undefined;
+
+				// 新的其实已经patch 完了, 只需要卸载剩下的旧的
+				if (patched >= toBePatched) {
+					unmount(prevChild, parentComponent, true);
+					continue;
+				}
+
 				// 判断是否能复用
 				if (prevChild.key != null) {
 					newIndex = keyToNewIndexMap.get(prevChild.key);
@@ -792,6 +801,8 @@ function baseCreateRenderer<
 						parentComponent,
 						isSVG
 					);
+					// patched + 1
+					patched++;
 				}
 			}
 		}
