@@ -67,16 +67,35 @@
 					// 		  ]);
 
 					// diff case 4 中间部分能复用旧的
+					// return () =>
+					// 	change.value
+					// 		? h('p', [
+					// 				h('p', { key: 'arr1' }, 'arr1'),
+					// 				h('p', { key: 'arr2' }, 'arr2'),
+					// 				h('p', { key: 'arr3' }, 'arr3'),
+					// 				h('p', { key: 'arr4' }, 'arr4')
+					// 		  ])
+					// 		: h('p', [
+					// 				h('p', { key: 'arr1' }, 'arr1'),
+					// 				h('p', { key: 'arr3' }, 'arr3'),
+					// 				h('p', { key: 'arr4' }, 'arr4')
+					// 		  ]);
+
+					// diff case 5 最常递增子序列
+
 					return () =>
 						change.value
 							? h('p', [
 									h('p', { key: 'arr1' }, 'arr1'),
 									h('p', { key: 'arr2' }, 'arr2'),
 									h('p', { key: 'arr3' }, 'arr3'),
+									h('p', { key: 'arr5' }, 'arr5'),
 									h('p', { key: 'arr4' }, 'arr4')
 							  ])
 							: h('p', [
 									h('p', { key: 'arr1' }, 'arr1'),
+									h('p', { key: 'arr5' }, 'arr5'),
+									h('p', { key: 'arr2' }, 'arr2'),
 									h('p', { key: 'arr3' }, 'arr3'),
 									h('p', { key: 'arr4' }, 'arr4')
 							  ]);

@@ -740,6 +740,7 @@ function baseCreateRenderer<
 			 * 1. 寻找能复用的
 			 * 2. 删除旧的不存在的
 			 * 3. 增加新的未插入的
+			 * 4. 新插入的还需要插入到指定位置
 			 */
 			const s1 = i; // 用于遍历旧的其实index
 			const s2 = i; // 用于遍历新的起始index
@@ -764,6 +765,8 @@ function baseCreateRenderer<
 
 			let patched = 0; // 新中patch 的数量用于 优化处理 当新的patch完了, 旧的其实就不用遍历了, 直接unmount
 			const toBePatched = e2 - s2 + 1; // 新中需要被patch的数量
+			const newIndexToOldIndexMap = new Array(toBePatched); // 新中index 对应的 旧中的index
+			for (i = 0; i < toBePatched; i++) newIndexToOldIndexMap[i] = 0; // 初始化为0
 			// 卸载旧的中没能被复用的 vnode
 			for (i = s1; i <= e1; i++) {
 				const prevChild = c1[i];
@@ -792,6 +795,9 @@ function baseCreateRenderer<
 				if (newIndex === undefined) {
 					unmount(prevChild, parentComponent, true);
 				} else {
+					// 这里是复用逻辑, 说明可以 修改 newIndexToOldIndexMap
+					// newIndexToOldIndexMap 是从 0 开始的, 所以需要 newIndex - s2
+					newIndexToOldIndexMap[newIndex - s2] = i + 1; // 因为i 可能为0 所以 + 1
 					// 存在就去复用
 					patch(
 						prevChild,
@@ -803,6 +809,52 @@ function baseCreateRenderer<
 					);
 					// patched + 1
 					patched++;
+				}
+			}
+
+			/**
+			 * a b (c d e) f g
+			 * a b (e c d) f g
+			 * 这样的中间部分, 都是可以复用的, 唯一的区别就是排序不同
+			 * 所以接下来我们要做的是 怎么去确定 是否需要move 以及 怎么move 的成本最小
+			 *
+			 * 我们看新 之后 ecd 对应 旧中的 下标为 4 2 3, 旧中的 2 3 4 => 2 3 是相对没有变的
+			 *
+			 * 从小到大的排序一定是稳定的, 不管你怎么插入 移动
+			 *
+			 * 所以我们尽量通过递增序列去 即 最长递增子序列
+			 *
+			 * [0, 1, 2] 这是新的
+			 * [5, 3, 4] 这是生成的映射 因为 + 1
+			 */
+
+			// 生成最长递增子序列
+			const increasingNewIndexSequence = getSequence(newIndexToOldIndexMap);
+			let j = increasingNewIndexSequence.length - 1;
+			/**
+			 * 为啥这里需要倒着插, 倒着插入一定是最稳定 不会存在前一个也是一个可能位置不对的元素
+			 * a b (c d e) f g
+			 * a b (e c d) f g
+			 * 比如 这里 插入c, d 是不是 还没有被插入即不稳定
+			 * 但是我们倒着 f 一定是稳定的
+			 */
+			for (let i = toBePatched - 1; i >= 0; i--) {
+				const nextIndex = s2 + i; // 这是实际的新children的下标
+				const nextChild = c2[nextIndex] as VNode; // 获取 对应的vnode
+				// 插入位置
+				const anchor =
+					nextIndex + 1 < l2 ? (c2[nextIndex + 1] as VNode).el : parentAnchor;
+
+				// 挂载
+				if (newIndexToOldIndexMap[i] === 0) {
+					// 为0 说明是新的 直接mount
+					patch(null, nextChild, container, anchor, parentComponent, isSVG);
+				}
+				// 移动
+				if (i !== increasingNewIndexSequence[j]) {
+					move(nextChild, container, anchor);
+				} else {
+					j--;
 				}
 			}
 		}
@@ -866,4 +918,45 @@ function toggleRecurse(
 	allowed: boolean
 ) {
 	effect.allowRecurse = update.allowRecurse = allowed;
+}
+
+function getSequence(arr: number[]): number[] {
+	const p = arr.slice();
+	const result = [0];
+	let i, j, u, v, c;
+	const len = arr.length;
+	for (i = 0; i < len; i++) {
+		const arrI = arr[i];
+		if (arrI !== 0) {
+			j = result[result.length - 1];
+			if (arr[j] < arrI) {
+				p[i] = j;
+				result.push(i);
+				continue;
+			}
+			u = 0;
+			v = result.length - 1;
+			while (u < v) {
+				c = (u + v) >> 1;
+				if (arr[result[c]] < arrI) {
+					u = c + 1;
+				} else {
+					v = c;
+				}
+			}
+			if (arrI < arr[result[u]]) {
+				if (u > 0) {
+					p[i] = result[u - 1];
+				}
+				result[u] = i;
+			}
+		}
+	}
+	u = result.length;
+	v = result[u - 1];
+	while (u-- > 0) {
+		result[u] = v;
+		v = p[v];
+	}
+	return result;
 }
