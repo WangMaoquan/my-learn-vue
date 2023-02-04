@@ -702,9 +702,9 @@ function baseCreateRenderer<
 		}
 
 		// 头遍历 i 小于 e2 说明中间还有未挂载的
-		if (i <= e2) {
+		if (i > e1) {
 			// 尾巴遍历 新的前面还有为挂载的
-			if (i > e1) {
+			if (i <= e2) {
 				// nextPos 是插入位置的下一个元素所在的位置
 				/**
 				 * 为啥不使用 nextpos = i + 1;
