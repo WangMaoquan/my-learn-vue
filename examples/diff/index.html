@@ -39,15 +39,28 @@
 					// 		  ]);
 
 					// diff case 2 从 end端开始比
+					// return () =>
+					// 	change.value
+					// 		? h('p', [
+					// 				h('p', { key: 'arr3' }, 'arr3'),
+					// 				h('p', { key: 'arr4' }, 'arr4')
+					// 		  ])
+					// 		: h('p', [
+					// 				h('p', { key: 'arr1' }, 'arr1'),
+					// 				h('p', { key: 'arr2' }, 'arr2'),
+					// 				h('p', { key: 'arr3' }, 'arr3'),
+					// 				h('p', { key: 'arr4' }, 'arr4')
+					// 		  ]);
+					// diff case 3 旧的多
 					return () =>
 						change.value
 							? h('p', [
+									h('p', { key: 'arr1' }, 'arr1'),
+									h('p', { key: 'arr2' }, 'arr2'),
 									h('p', { key: 'arr3' }, 'arr3'),
 									h('p', { key: 'arr4' }, 'arr4')
 							  ])
 							: h('p', [
-									h('p', { key: 'arr1' }, 'arr1'),
-									h('p', { key: 'arr2' }, 'arr2'),
 									h('p', { key: 'arr3' }, 'arr3'),
 									h('p', { key: 'arr4' }, 'arr4')
 							  ]);
