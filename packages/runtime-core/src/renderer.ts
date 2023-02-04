@@ -330,15 +330,8 @@ function baseCreateRenderer<
 	};
 
 	const remove: RemoveFn = (vnode) => {
-		const { children } = vnode;
-		const removeArr = isArray(children) ? children : [children];
-		(removeArr as VNode[]).forEach((child) => {
-			if (child.type === Comment) {
-				hostRemove(child.el!);
-			} else {
-				remove(child);
-			}
-		});
+		const { el } = vnode;
+		hostRemove(el!);
 	};
 
 	const unmount: UnmountFn = (vnode, parentComponent, doRemove = false) => {
@@ -712,6 +705,7 @@ function baseCreateRenderer<
 		if (i <= e2) {
 			// 尾巴遍历 新的前面还有为挂载的
 			if (i > e1) {
+				// nextPos 是插入位置的下一个元素所在的位置
 				const nextPos = e2 + 1;
 				const anchor = nextPos < l2 ? (c2[nextPos] as VNode).el : parentAnchor;
 				while (i <= e2) {
@@ -725,6 +719,13 @@ function baseCreateRenderer<
 					);
 					i++;
 				}
+			}
+		} else if (i > e2) {
+			// 说明旧的比新的多
+			while (i <= e1) {
+				// 卸载
+				unmount(c1[i], parentComponent, true);
+				i++;
 			}
 		}
 	};
