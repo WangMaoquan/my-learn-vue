@@ -706,6 +706,13 @@ function baseCreateRenderer<
 			// 尾巴遍历 新的前面还有为挂载的
 			if (i > e1) {
 				// nextPos 是插入位置的下一个元素所在的位置
+				/**
+				 * 为啥不使用 nextpos = i + 1;
+				 *     a b
+				 * c d a b
+				 * 这种例子时会出现问题
+				 * 相较于 i e2 的位置 + 1 一定是存在的可插入的位置的
+				 */
 				const nextPos = e2 + 1;
 				const anchor = nextPos < l2 ? (c2[nextPos] as VNode).el : parentAnchor;
 				while (i <= e2) {
