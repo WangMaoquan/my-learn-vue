@@ -13,6 +13,7 @@ import {
 	createComponentInstance,
 	setupComponent
 } from './component';
+import { updateProps } from './componentProps';
 import { renderComponentRoot } from './componentRenderUtils';
 import { SchedulerJob } from './scheduler';
 import {
@@ -587,8 +588,15 @@ function baseCreateRenderer<
 				/**
 				 * 更新
 				 */
+				let { next, vnode } = instance;
 				console.log('update');
 				toggleRecurse(instance, false);
+				if (next) {
+					next.el = vnode.el;
+					updateComponentPreRender(instance, next);
+				} else {
+					next = vnode;
+				}
 				/**
 				 * beforeupdate 钩子
 				 * vnode 的beforeupdate 钩子
@@ -623,7 +631,33 @@ function baseCreateRenderer<
 		update();
 	};
 
-	const updateComponent = () => {};
+	// 在update 流程 调用render 之前 重新处理 props, slots, 保证更新的时候是最新的
+	const updateComponentPreRender = (
+		instance: ComponentInternalInstance,
+		nextVNode: VNode
+	) => {
+		// 重新赋值instance
+		nextVNode.component = instance;
+		// 为了下次更新 将这次的next 做为下次的vnode
+		instance.vnode = nextVNode;
+		// 重置 next
+		instance.next = null;
+		// 更新props
+		updateProps(instance, nextVNode.props);
+
+		// todo update slots
+	};
+
+	// 实现updateComponent
+	const updateComponent = (n1: VNode, n2: VNode) => {
+		// 获取当前的组件是实例 同事将n1 的赋值给n2
+		const instance = (n2.component = n1.component)!;
+
+		instance.next = n2;
+
+		// 执行update
+		instance.update();
+	};
 
 	const processComponent: ProcessComponentFn = (
 		n1,
@@ -638,7 +672,7 @@ function baseCreateRenderer<
 			mountComponent(n2, container, anchor, parentComponent, isSVG);
 		} else {
 			// 更新
-			updateComponent();
+			updateComponent(n1, n2);
 		}
 	};
 
