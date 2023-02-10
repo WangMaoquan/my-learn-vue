@@ -243,7 +243,7 @@ export function createComponentInstance(
 
 		ctx: EMPTY_OBJ,
 		data: EMPTY_OBJ,
-		props: EMPTY_OBJ,
+		props: vnode.props || EMPTY_OBJ,
 		propsDefaults: EMPTY_OBJ,
 		slots: EMPTY_OBJ,
 		attrs: EMPTY_OBJ,

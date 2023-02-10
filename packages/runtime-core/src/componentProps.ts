@@ -64,9 +64,14 @@ export function initProps(
 	instance.propsDefaults = Object.create(null);
 
 	// 保证所有的key 都在props里面
-	for (const key in instance.propsOptions[0]) {
-		if (!(key in props)) {
-			props[key] = undefined;
+	// for (const key in instance.propsOptions[0]) {
+	// 	if (!(key in props)) {
+	// 		props[key] = undefined;
+	// 	}
+	// }
+	for (const key in rawProps) {
+		if (!['class', 'style'].includes(key) && !(key in props)) {
+			props[key] = rawProps[key];
 		}
 	}
 
@@ -230,4 +235,14 @@ function isExplicable(type: string): boolean {
 
 function isBoolean(...args: string[]): boolean {
 	return args.some((elem) => elem.toLowerCase() === 'boolean');
+}
+
+export function updateProps(
+	instance: ComponentInternalInstance,
+	rawProps: Data | null
+) {
+	// 处理props
+	for (const key in rawProps) {
+		instance.props[key] = rawProps[key];
+	}
 }
