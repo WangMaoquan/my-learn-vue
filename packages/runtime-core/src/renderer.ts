@@ -14,7 +14,10 @@ import {
 	setupComponent
 } from './component';
 import { updateProps } from './componentProps';
-import { renderComponentRoot } from './componentRenderUtils';
+import {
+	renderComponentRoot,
+	shouldUpdateComponent
+} from './componentRenderUtils';
 import { SchedulerJob } from './scheduler';
 import {
 	isSameVNodeType,
@@ -653,10 +656,14 @@ function baseCreateRenderer<
 		// 获取当前的组件是实例 同事将n1 的赋值给n2
 		const instance = (n2.component = n1.component)!;
 
-		instance.next = n2;
-
-		// 执行update
-		instance.update();
+		if (shouldUpdateComponent(n1, n2)) {
+			updateComponentPreRender(instance, n2);
+			return;
+		} else {
+			instance.next = n2;
+			// 执行update
+			instance.update();
+		}
 	};
 
 	const processComponent: ProcessComponentFn = (

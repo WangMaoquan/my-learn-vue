@@ -63,3 +63,27 @@ export function renderComponentRoot(
 	setCurrentRenderingInstance(prev);
 	return result!;
 }
+
+/**
+ * 判断是否需要更新
+ * 只判断了props
+ */
+export function shouldUpdateComponent(
+	prevVNode: VNode,
+	nextVNode: VNode
+): boolean {
+	const { props: prevProps } = prevVNode;
+	const { props: nextProps } = nextVNode;
+	// todo children
+	if (prevProps === nextProps) {
+		return false;
+	}
+	if (!prevProps) {
+		return !!nextProps;
+	}
+	if (!nextProps) {
+		return true;
+	}
+
+	return false;
+}
