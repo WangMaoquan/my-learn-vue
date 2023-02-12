@@ -43,12 +43,26 @@ function parseChildren(context: ParserContext) {
 
 // 处理插值
 function parseInterpolation(context: ParserContext) {
-	// todo 处理context
+	// todo 处理 {{ xxx }}
+	// 通过找到 }}的索引, 然后减  2({{的长度) 就是 xxx 的长度
+
+	const closeIndex = context.source.indexOf('}}', 2);
+
+	// {{xxx}} => xxx}}
+	context.source = context.source.slice(2);
+
+	const rawContentLen = closeIndex - 2;
+
+	const content = context.source.slice(rawContentLen);
+
+	// xxx }} =>
+	context.source = context.source.slice(rawContentLen + 2);
+
 	return {
 		type: 'interpolation',
 		content: {
 			type: 'simple_expression',
-			content: 'message'
+			content
 		}
 	};
 }
