@@ -15,6 +15,10 @@ export interface RootNode extends Node {
 	children: any[];
 }
 
+export interface ElementNode extends Node {
+	tag: string;
+}
+
 /**
  * 创建 ast 的根节点
  */

@@ -16,6 +16,11 @@ export interface ParserContext {
 	source: string;
 }
 
+const enum TagType {
+	Start,
+	End
+}
+
 export function baseParse(content: string) {
 	// 全局上下文对象
 	const context = createParseContext(content);
@@ -32,13 +37,19 @@ function createParseContext(content: string): ParserContext {
 
 // 解析 生成的context 返回 ast节点的children
 function parseChildren(context: ParserContext) {
+	const s = context.source;
 	const nodes: any[] = [];
 
 	let node;
 
 	// 只有是 {{ 开头时 才会去处理
-	if (context.source.startsWith('{{')) {
+	if (s.startsWith('{{')) {
 		node = parseInterpolation(context);
+	} else if (s[0] === '<') {
+		// < 开头 第二个是字母 认为是 element
+		if (/[a-z]/i.test(s[1])) {
+			node = parseElement(context);
+		}
 	}
 
 	nodes.push(node);
@@ -85,4 +96,32 @@ function parseInterpolation(context: ParserContext) {
 function advanceBy(context: ParserContext, numberOfCharacters: number): void {
 	const { source } = context;
 	context.source = source.slice(numberOfCharacters);
+}
+
+function parseElement(context: ParserContext) {
+	const element = parseTag(context, TagType.Start);
+
+	parseTag(context, TagType.End);
+
+	return element;
+}
+
+function parseTag(context: ParserContext, type: TagType) {
+	// todo 处理属性
+	// 1. 解析tag
+	const match = /^<\/?([a-z]*)/i.exec(context.source)!;
+	const tag = match[1];
+
+	// 2. 修改source
+	advanceBy(context, match[0].length);
+	advanceBy(context, 1);
+
+	if (type === TagType.End) {
+		return;
+	}
+
+	return {
+		tag,
+		type: NodeTypes.ELEMENT
+	};
 }
