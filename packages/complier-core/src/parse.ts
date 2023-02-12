@@ -64,7 +64,10 @@ function parseInterpolation(context: ParserContext) {
 
 	const rawContentLen = closeIndex - openDelimiter.length;
 
-	const content = context.source.slice(0, rawContentLen);
+	const rawContent = context.source.slice(0, rawContentLen);
+
+	// 处理 {{ content }} 情况
+	const content = rawContent.trim();
 
 	// xxx }} =>
 	advanceBy(context, closeDelimiter.length);
