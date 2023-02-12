@@ -1,4 +1,4 @@
-import { createRoot } from './ast';
+import { createRoot, NodeTypes } from './ast';
 
 /**
  * baseParse 接受一个字符串 返回一个 root AST
@@ -34,7 +34,12 @@ function createParseContext(content: string): ParserContext {
 function parseChildren(context: ParserContext) {
 	const nodes: any[] = [];
 
-	const node = parseInterpolation(context);
+	let node;
+
+	// 只有是 {{ 开头时 才会去处理
+	if (context.source.startsWith('{{')) {
+		node = parseInterpolation(context);
+	}
 
 	nodes.push(node);
 
@@ -43,26 +48,38 @@ function parseChildren(context: ParserContext) {
 
 // 处理插值
 function parseInterpolation(context: ParserContext) {
+	const openDelimiter = '{{';
+	const closeDelimiter = '}}';
+
 	// todo 处理 {{ xxx }}
 	// 通过找到 }}的索引, 然后减  2({{的长度) 就是 xxx 的长度
 
-	const closeIndex = context.source.indexOf('}}', 2);
+	const closeIndex = context.source.indexOf(
+		closeDelimiter,
+		openDelimiter.length
+	);
 
 	// {{xxx}} => xxx}}
-	context.source = context.source.slice(2);
+	advanceBy(context, openDelimiter.length);
 
-	const rawContentLen = closeIndex - 2;
+	const rawContentLen = closeIndex - openDelimiter.length;
 
-	const content = context.source.slice(rawContentLen);
+	const content = context.source.slice(0, rawContentLen);
 
 	// xxx }} =>
-	context.source = context.source.slice(rawContentLen + 2);
+	advanceBy(context, closeDelimiter.length);
 
 	return {
-		type: 'interpolation',
+		type: NodeTypes.INTERPOLATION,
 		content: {
 			type: 'simple_expression',
 			content
 		}
 	};
+}
+
+// 解析后 截取掉我们解析的部分
+function advanceBy(context: ParserContext, numberOfCharacters: number): void {
+	const { source } = context;
+	context.source = source.slice(numberOfCharacters);
 }

@@ -1,4 +1,4 @@
-import { baseParse } from '../';
+import { baseParse, NodeTypes } from '../';
 
 /**
  * vue template => render 方法
@@ -19,7 +19,7 @@ describe('parse', () => {
 			 */
 			const ast = baseParse(`{{message}}`);
 			expect(ast.children[0]).toStrictEqual({
-				type: 'interpolation',
+				type: NodeTypes.INTERPOLATION,
 				content: {
 					type: 'simple_expression',
 					content: 'message'
