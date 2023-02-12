@@ -1,4 +1,17 @@
-export interface RootNode {
+export const enum NodeTypes {
+	ROOT, // 根
+	ELEMENT, // html 元素
+	TEXT, // 文本
+	COMMENT, // 注释
+	SIMPLE_EXPRESSION, // {{ xxx }} 中的 xxx
+	INTERPOLATION // {{}}
+}
+
+export interface Node {
+	type: NodeTypes;
+}
+
+export interface RootNode extends Node {
 	children: any[];
 }
 
@@ -7,6 +20,7 @@ export interface RootNode {
  */
 export function createRoot(children: any[]): RootNode {
 	return {
+		type: NodeTypes.ROOT,
 		children
 	};
 }
