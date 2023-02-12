@@ -1,4 +1,4 @@
-import { createRoot, NodeTypes } from './ast';
+import { createRoot, NodeTypes, ElementNode, TextNode } from './ast';
 
 /**
  * baseParse 接受一个字符串 返回一个 root AST
@@ -50,6 +50,11 @@ function parseChildren(context: ParserContext) {
 		if (/[a-z]/i.test(s[1])) {
 			node = parseElement(context);
 		}
+	}
+
+	// 默认走文本
+	if (!node) {
+		node = parseText(context);
 	}
 
 	nodes.push(node);
@@ -106,7 +111,12 @@ function parseElement(context: ParserContext) {
 	return element;
 }
 
-function parseTag(context: ParserContext, type: TagType) {
+function parseTag(context: ParserContext, type: TagType.Start): ElementNode;
+function parseTag(context: ParserContext, type: TagType.End): void;
+function parseTag(
+	context: ParserContext,
+	type: TagType
+): ElementNode | undefined {
 	// todo 处理属性
 	// 1. 解析tag
 	const match = /^<\/?([a-z]*)/i.exec(context.source)!;
@@ -123,5 +133,16 @@ function parseTag(context: ParserContext, type: TagType) {
 	return {
 		tag,
 		type: NodeTypes.ELEMENT
+	};
+}
+
+function parseText(context: ParserContext): TextNode {
+	const content = context.source;
+
+	advanceBy(context, content.length);
+
+	return {
+		type: NodeTypes.TEXT,
+		content
 	};
 }

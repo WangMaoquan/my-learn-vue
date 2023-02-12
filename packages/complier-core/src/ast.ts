@@ -19,6 +19,10 @@ export interface ElementNode extends Node {
 	tag: string;
 }
 
+export interface TextNode extends Node {
+	content: string;
+}
+
 /**
  * 创建 ast 的根节点
  */
