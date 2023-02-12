@@ -80,7 +80,7 @@ function parseInterpolation(context: ParserContext) {
 
 	const rawContentLen = closeIndex - openDelimiter.length;
 
-	const rawContent = context.source.slice(0, rawContentLen);
+	const rawContent = parseTextData(context, rawContentLen);
 
 	// 处理 {{ content }} 情况
 	const content = rawContent.trim();
@@ -137,12 +137,15 @@ function parseTag(
 }
 
 function parseText(context: ParserContext): TextNode {
-	const content = context.source;
-
-	advanceBy(context, content.length);
-
+	const content = parseTextData(context, context.source.length);
 	return {
 		type: NodeTypes.TEXT,
 		content
 	};
+}
+
+function parseTextData(context: ParserContext, length: number): string {
+	const rawText = context.source.slice(0, length);
+	advanceBy(context, length);
+	return rawText;
 }
