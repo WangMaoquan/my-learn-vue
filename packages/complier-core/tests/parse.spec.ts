@@ -109,6 +109,8 @@ describe('parse', () => {
 	});
 
 	test('throw error', () => {
-		expect(() => baseParse(`<div><span></div>`)).toThrowError();
+		expect(() => baseParse(`<div><span></div>`)).toThrowError(
+			'缺少close tag: span'
+		);
 	});
 });

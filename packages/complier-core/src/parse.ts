@@ -114,7 +114,7 @@ function parseElement(context: ParserContext, ancestors: string[]) {
 	ancestors.pop();
 
 	// 需要验证 结束的tag 是不是对应的
-	if (element.tag === context.source.slice(2, element.tag.length)) {
+	if (startsWithEndTagOpen(context.source, element.tag)) {
 		parseTag(context, TagType.End);
 	} else {
 		throw Error(`缺少close tag: ${element.tag}`);
@@ -183,12 +183,18 @@ function isEnd(context: ParserContext, ancestors: string[]): boolean {
 	 * 2. element 的结束</ 这种也是需要停止循环的
 	 */
 	const s = context.source;
-	for (let i = 0; i < ancestors.length; i++) {
-		const tag = ancestors[i];
-		if (tag === s.slice(2, 2 + tag.length)) {
+	for (let i = ancestors.length - 1; i >= 0; i--) {
+		if (startsWithEndTagOpen(s, ancestors[i])) {
 			return true;
 		}
 	}
 
 	return !s;
+}
+
+function startsWithEndTagOpen(source: string, tag: string) {
+	return (
+		source.startsWith('</') &&
+		source.slice(2, 2 + tag.length).toLowerCase() === tag.toLowerCase()
+	);
 }
