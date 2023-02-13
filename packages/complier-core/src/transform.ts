@@ -1,23 +1,55 @@
-import { NodeTypes, RootNode, TemplateChildNode, TextNode } from './ast';
-export function transform(root: RootNode) {
-	traverseNode(root);
+import { RootNode, TemplateChildNode, ParentNode, NodeTypes } from './ast';
+import { TransformOptions } from './options';
+
+export interface TransformContext {
+	root: RootNode;
+	nodeTransforms: NodeTransform[];
+}
+
+export type NodeTransform = (
+	node: RootNode | TemplateChildNode,
+	context: TransformContext
+) => void | (() => void) | (() => void)[];
+
+export function transform(root: RootNode, options: TransformOptions) {
+	const context = createTransformContext(root, options);
+	traverseNode(root, context);
 	return root;
 }
 
-function traverseNode(node: TemplateChildNode | RootNode) {
-	const children = 'children' in node ? node.children : [];
+function traverseNode(
+	node: TemplateChildNode | RootNode,
+	context: TransformContext
+) {
+	const nodeTransforms = context.nodeTransforms;
 
-	// 根据不同的类型去处理
+	for (let i = 0; i < nodeTransforms.length; i++) {
+		nodeTransforms[i](node, context);
+	}
 	switch (node.type) {
-		case NodeTypes.TEXT:
-			(node as TextNode).content += '王小明';
+		case NodeTypes.ROOT:
+		case NodeTypes.ELEMENT:
+			traverseChildren(node, context);
 			break;
 		default:
 			break;
 	}
+}
 
+function traverseChildren(node: ParentNode, context: TransformContext) {
+	const children = node.children || [];
 	for (let i = 0; i < children.length; i++) {
 		const child = children[i];
-		traverseNode(child);
+		traverseNode(child, context);
 	}
+}
+
+function createTransformContext(
+	root: RootNode,
+	options: TransformOptions
+): TransformContext {
+	return {
+		root,
+		nodeTransforms: options.nodeTransforms || []
+	};
 }

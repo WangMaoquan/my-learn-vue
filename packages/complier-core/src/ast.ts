@@ -13,17 +13,22 @@ export interface Node {
 
 export type TemplateChildNode = ElementNode | TextNode;
 
+export type ParentNode = RootNode | ElementNode;
+
 export interface RootNode extends Node {
 	children: TemplateChildNode[];
+	type: NodeTypes.ROOT;
 }
 
 export interface ElementNode extends Node {
 	tag: string;
 	children: TemplateChildNode[];
+	type: NodeTypes.ELEMENT;
 }
 
 export interface TextNode extends Node {
 	content: string;
+	type: NodeTypes.TEXT;
 }
 
 /**

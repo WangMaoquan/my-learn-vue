@@ -1,5 +1,4 @@
-import { ElementNode } from './../src/ast';
-import { baseParse, TextNode, transform } from '../src';
+import { baseParse, TextNode, transform, ElementNode, NodeTypes } from '../src';
 
 describe('transform', () => {
 	/**
@@ -13,7 +12,15 @@ describe('transform', () => {
 	 */
 	test('transform text node', () => {
 		const ast = baseParse(`<div>hi,{{message}}</div>`);
-		transform(ast);
+		transform(ast, {
+			nodeTransforms: [
+				(node) => {
+					if (node.type === NodeTypes.TEXT) {
+						(node as TextNode).content += '王小明';
+					}
+				}
+			]
+		});
 		const textNode = (ast.children[0] as ElementNode).children[0] as TextNode;
 		expect(textNode.content).toBe('hi,王小明');
 	});
