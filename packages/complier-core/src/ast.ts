@@ -17,6 +17,7 @@ export interface RootNode extends Node {
 
 export interface ElementNode extends Node {
 	tag: string;
+	children: any[];
 }
 
 export interface TextNode extends Node {

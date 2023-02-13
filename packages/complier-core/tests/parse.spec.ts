@@ -43,7 +43,8 @@ describe('parse', () => {
 			const ast = baseParse(`<div></div>`);
 			expect(ast.children[0]).toStrictEqual({
 				type: NodeTypes.ELEMENT,
-				tag: 'div'
+				tag: 'div',
+				children: []
 			});
 		});
 	});
@@ -55,6 +56,28 @@ describe('parse', () => {
 				type: NodeTypes.TEXT,
 				content: 'some text'
 			});
+		});
+	});
+
+	test('mixin interpolation & text & element', () => {
+		const ast = baseParse(`<div>hi,{{message}}</div>`);
+		console.log(ast);
+		expect(ast.children[0]).toStrictEqual({
+			type: NodeTypes.ELEMENT,
+			tag: 'div',
+			children: [
+				{
+					type: NodeTypes.TEXT,
+					content: 'hi,'
+				},
+				{
+					type: NodeTypes.INTERPOLATION,
+					content: {
+						type: 'simple_expression',
+						content: 'message'
+					}
+				}
+			]
 		});
 	});
 });

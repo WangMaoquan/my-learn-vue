@@ -36,28 +36,31 @@ function createParseContext(content: string): ParserContext {
 }
 
 // 解析 生成的context 返回 ast节点的children
-function parseChildren(context: ParserContext) {
-	const s = context.source;
+function parseChildren(context: ParserContext, parentTag?: string) {
 	const nodes: any[] = [];
 
-	let node;
+	// 需要一步一步走 所以需要循环
+	while (!isEnd(context, parentTag)) {
+		const s = context.source;
+		let node;
 
-	// 只有是 {{ 开头时 才会去处理
-	if (s.startsWith('{{')) {
-		node = parseInterpolation(context);
-	} else if (s[0] === '<') {
-		// < 开头 第二个是字母 认为是 element
-		if (/[a-z]/i.test(s[1])) {
-			node = parseElement(context);
+		// 只有是 {{ 开头时 才会去处理
+		if (s.startsWith('{{')) {
+			node = parseInterpolation(context);
+		} else if (s[0] === '<') {
+			// < 开头 第二个是字母 认为是 element
+			if (/[a-z]/i.test(s[1])) {
+				node = parseElement(context);
+			}
 		}
-	}
 
-	// 默认走文本
-	if (!node) {
-		node = parseText(context);
-	}
+		// 默认走文本
+		if (!node) {
+			node = parseText(context);
+		}
 
-	nodes.push(node);
+		nodes.push(node);
+	}
 
 	return nodes;
 }
@@ -105,7 +108,8 @@ function advanceBy(context: ParserContext, numberOfCharacters: number): void {
 
 function parseElement(context: ParserContext) {
 	const element = parseTag(context, TagType.Start);
-
+	// 处理 element 里面的children
+	element.children = parseChildren(context, element.tag);
 	parseTag(context, TagType.End);
 
 	return element;
@@ -130,14 +134,26 @@ function parseTag(
 		return;
 	}
 
+	// elementNode 里面存在 插值 文本 element之类的 所以需要children 属性
 	return {
 		tag,
-		type: NodeTypes.ELEMENT
+		type: NodeTypes.ELEMENT,
+		children: []
 	};
 }
 
 function parseText(context: ParserContext): TextNode {
-	const content = parseTextData(context, context.source.length);
+	let endIndex = context.source.length;
+	// 因为文本Node 加别的node 我们截取的长度不应该是source.length 文本的长度
+
+	// 这里处理的文本 + 插值的情况 所以我们只需要截取到 {{ 之前
+	let endTokenIndex = context.source.indexOf('{{');
+	if (endTokenIndex !== -1) {
+		endIndex = endTokenIndex;
+	}
+
+	// todo 文本加 element
+	const content = parseTextData(context, endIndex);
 	return {
 		type: NodeTypes.TEXT,
 		content
@@ -148,4 +164,17 @@ function parseTextData(context: ParserContext, length: number): string {
 	const rawText = context.source.slice(0, length);
 	advanceBy(context, length);
 	return rawText;
+}
+
+function isEnd(context: ParserContext, parentTag?: string): boolean {
+	/**
+	 * 1. s已经被处理完了 是需要停止循环的
+	 * 2. element 的结束</ 这种也是需要停止循环的
+	 */
+	const s = context.source;
+	if (parentTag && s.startsWith(`</${parentTag}>`)) {
+		return true;
+	}
+
+	return !s;
 }
