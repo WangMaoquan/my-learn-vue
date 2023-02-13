@@ -25,7 +25,7 @@ export function baseParse(content: string) {
 	// 全局上下文对象
 	const context = createParseContext(content);
 
-	return createRoot(parseChildren(context));
+	return createRoot(parseChildren(context, []));
 }
 
 // 生成全局上下文对象
@@ -36,11 +36,11 @@ function createParseContext(content: string): ParserContext {
 }
 
 // 解析 生成的context 返回 ast节点的children
-function parseChildren(context: ParserContext, parentTag?: string) {
+function parseChildren(context: ParserContext, ancestors: string[]) {
 	const nodes: any[] = [];
 
 	// 需要一步一步走 所以需要循环
-	while (!isEnd(context, parentTag)) {
+	while (!isEnd(context, ancestors)) {
 		const s = context.source;
 		let node;
 
@@ -50,7 +50,7 @@ function parseChildren(context: ParserContext, parentTag?: string) {
 		} else if (s[0] === '<') {
 			// < 开头 第二个是字母 认为是 element
 			if (/[a-z]/i.test(s[1])) {
-				node = parseElement(context);
+				node = parseElement(context, ancestors);
 			}
 		}
 
@@ -106,12 +106,19 @@ function advanceBy(context: ParserContext, numberOfCharacters: number): void {
 	context.source = source.slice(numberOfCharacters);
 }
 
-function parseElement(context: ParserContext) {
+function parseElement(context: ParserContext, ancestors: string[]) {
 	const element = parseTag(context, TagType.Start);
+	ancestors.push(element.tag);
 	// 处理 element 里面的children
-	element.children = parseChildren(context, element.tag);
-	parseTag(context, TagType.End);
+	element.children = parseChildren(context, ancestors);
+	ancestors.pop();
 
+	// 需要验证 结束的tag 是不是对应的
+	if (element.tag === context.source.slice(2, element.tag.length)) {
+		parseTag(context, TagType.End);
+	} else {
+		throw Error(`缺少close tag: ${element.tag}`);
+	}
 	return element;
 }
 
@@ -170,14 +177,17 @@ function parseTextData(context: ParserContext, length: number): string {
 	return rawText;
 }
 
-function isEnd(context: ParserContext, parentTag?: string): boolean {
+function isEnd(context: ParserContext, ancestors: string[]): boolean {
 	/**
 	 * 1. s已经被处理完了 是需要停止循环的
 	 * 2. element 的结束</ 这种也是需要停止循环的
 	 */
 	const s = context.source;
-	if (parentTag && s.startsWith(`</${parentTag}>`)) {
-		return true;
+	for (let i = 0; i < ancestors.length; i++) {
+		const tag = ancestors[i];
+		if (tag === s.slice(2, 2 + tag.length)) {
+			return true;
+		}
 	}
 
 	return !s;

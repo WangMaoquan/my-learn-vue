@@ -83,7 +83,6 @@ describe('parse', () => {
 
 	test('nested element', () => {
 		const ast = baseParse(`<div><p>hi</p>{{message}}</div>`);
-		console.log(ast);
 		expect(ast.children[0]).toStrictEqual({
 			type: NodeTypes.ELEMENT,
 			tag: 'div',
@@ -107,5 +106,9 @@ describe('parse', () => {
 				}
 			]
 		});
+	});
+
+	test('throw error', () => {
+		expect(() => baseParse(`<div><span></div>`)).toThrowError();
 	});
 });
