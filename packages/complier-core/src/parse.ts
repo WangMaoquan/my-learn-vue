@@ -147,12 +147,16 @@ function parseText(context: ParserContext): TextNode {
 	// 因为文本Node 加别的node 我们截取的长度不应该是source.length 文本的长度
 
 	// 这里处理的文本 + 插值的情况 所以我们只需要截取到 {{ 之前
-	let endTokenIndex = context.source.indexOf('{{');
-	if (endTokenIndex !== -1) {
-		endIndex = endTokenIndex;
+	// todo 文本加 element
+	const endTokens = ['{{', '<'];
+	for (let i = 0; i < endTokens.length; i++) {
+		const endTokenIndex = context.source.indexOf(endTokens[i]);
+		// 截取的越靠前越好
+		if (endTokenIndex !== -1 && endIndex > endTokenIndex) {
+			endIndex = endTokenIndex;
+		}
 	}
 
-	// todo 文本加 element
 	const content = parseTextData(context, endIndex);
 	return {
 		type: NodeTypes.TEXT,

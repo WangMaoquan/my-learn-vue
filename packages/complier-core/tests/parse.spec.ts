@@ -60,15 +60,43 @@ describe('parse', () => {
 	});
 
 	test('mixin interpolation & text & element', () => {
-		const ast = baseParse(`<div>hi,{{message}}</div>`);
+		const ast = baseParse(`<p>hi,{{message}}</p>`);
+		console.log(ast);
+		expect(ast.children[0]).toStrictEqual({
+			type: NodeTypes.ELEMENT,
+			tag: 'p',
+			children: [
+				{
+					type: NodeTypes.TEXT,
+					content: 'hi,'
+				},
+				{
+					type: NodeTypes.INTERPOLATION,
+					content: {
+						type: 'simple_expression',
+						content: 'message'
+					}
+				}
+			]
+		});
+	});
+
+	test('nested element', () => {
+		const ast = baseParse(`<div><p>hi</p>{{message}}</div>`);
 		console.log(ast);
 		expect(ast.children[0]).toStrictEqual({
 			type: NodeTypes.ELEMENT,
 			tag: 'div',
 			children: [
 				{
-					type: NodeTypes.TEXT,
-					content: 'hi,'
+					type: NodeTypes.ELEMENT,
+					tag: 'p',
+					children: [
+						{
+							type: NodeTypes.TEXT,
+							content: 'hi'
+						}
+					]
 				},
 				{
 					type: NodeTypes.INTERPOLATION,
