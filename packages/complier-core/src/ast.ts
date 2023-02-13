@@ -11,13 +11,15 @@ export interface Node {
 	type: NodeTypes;
 }
 
+export type TemplateChildNode = ElementNode | TextNode;
+
 export interface RootNode extends Node {
-	children: any[];
+	children: TemplateChildNode[];
 }
 
 export interface ElementNode extends Node {
 	tag: string;
-	children: any[];
+	children: TemplateChildNode[];
 }
 
 export interface TextNode extends Node {
@@ -27,7 +29,7 @@ export interface TextNode extends Node {
 /**
  * 创建 ast 的根节点
  */
-export function createRoot(children: any[]): RootNode {
+export function createRoot(children: TemplateChildNode[]): RootNode {
 	return {
 		type: NodeTypes.ROOT,
 		children
