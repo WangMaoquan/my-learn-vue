@@ -12,7 +12,9 @@ export type NodeTransform = (
 ) => void | (() => void) | (() => void)[];
 
 export function transform(root: RootNode, options: TransformOptions) {
+	// 创建 上下文对象, 保存option 中配置
 	const context = createTransformContext(root, options);
+	// 深度优先遍历
 	traverseNode(root, context);
 	return root;
 }
@@ -21,11 +23,15 @@ function traverseNode(
 	node: TemplateChildNode | RootNode,
 	context: TransformContext
 ) {
+	// 获取 nodeTransforms
 	const nodeTransforms = context.nodeTransforms;
 
+	// 调用 自定义的plugin
 	for (let i = 0; i < nodeTransforms.length; i++) {
 		nodeTransforms[i](node, context);
 	}
+
+	// root element 才有children
 	switch (node.type) {
 		case NodeTypes.ROOT:
 		case NodeTypes.ELEMENT:
