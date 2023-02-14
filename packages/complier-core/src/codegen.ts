@@ -1,4 +1,4 @@
-import { RootNode } from './ast';
+import { RootNode, TemplateChildNode } from './ast';
 
 // https://template-explorer.vuejs.org/
 
@@ -7,19 +7,49 @@ export interface CodegenResult {
 	ast: RootNode;
 }
 
+type CodegenNode = TemplateChildNode;
+
+export interface CodegenContext {
+	code: string;
+	push(code: string): void;
+}
+
 export function generate(ast: RootNode): CodegenResult {
-	let code = `return `;
+	const context = createCodegenContext(ast);
+	const { push } = context;
+	push(`return `);
 	const functionName = 'render';
 	const args = ['_ctx', '_cache'];
 	const signature = args.join(', ');
 
-	code += `function ${functionName}(${signature}){`;
-	const node = ast.codegenNode;
-	code += `return "${(node as any).content}"`; // 这一步其实我们可以放到 transform 里面去生成
-	code += `}`;
+	push(`function ${functionName}(${signature}){`);
+	push(`return `);
+	genNode(ast.codegenNode!, context);
+	push(`}`);
 
 	return {
-		code,
+		code: context.code,
 		ast
 	};
+}
+
+function createCodegenContext(
+	ast: RootNode,
+	{ code }: any = {
+		code: ``
+	}
+): CodegenContext {
+	const context: CodegenContext = {
+		code,
+		push(code: string) {
+			context.code += code;
+		}
+	};
+
+	return context;
+}
+
+function genNode(node: CodegenNode, context: CodegenContext) {
+	const { push } = context;
+	push(`"${(node as any).content}"`);
 }
