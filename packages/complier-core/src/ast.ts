@@ -11,7 +11,11 @@ export interface Node {
 	type: NodeTypes;
 }
 
-export type TemplateChildNode = ElementNode | TextNode;
+export type TemplateChildNode = ElementNode | TextNode | InterpolationNode;
+
+export type JSChildNode = ExpressionNode;
+
+export type ExpressionNode = SimpleExpressionNode;
 
 export type ParentNode = RootNode | ElementNode;
 
@@ -19,6 +23,7 @@ export interface RootNode extends Node {
 	children: TemplateChildNode[];
 	type: NodeTypes.ROOT;
 	codegenNode?: TemplateChildNode;
+	helpers: Set<string>;
 }
 
 export interface ElementNode extends Node {
@@ -32,12 +37,23 @@ export interface TextNode extends Node {
 	type: NodeTypes.TEXT;
 }
 
+export interface InterpolationNode extends Node {
+	type: NodeTypes.INTERPOLATION;
+	content: ExpressionNode;
+}
+
+export interface SimpleExpressionNode extends Node {
+	type: NodeTypes.SIMPLE_EXPRESSION;
+	content: string;
+}
+
 /**
  * 创建 ast 的根节点
  */
 export function createRoot(children: TemplateChildNode[]): RootNode {
 	return {
 		type: NodeTypes.ROOT,
-		children
+		children,
+		helpers: new Set()
 	};
 }
