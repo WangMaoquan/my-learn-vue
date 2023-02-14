@@ -1,4 +1,12 @@
-import { JSChildNode, NodeTypes, RootNode, TemplateChildNode } from './ast';
+import {
+	ExpressionNode,
+	InterpolationNode,
+	JSChildNode,
+	NodeTypes,
+	RootNode,
+	TemplateChildNode,
+	TextNode
+} from './ast';
 import { helperNameMap, TO_DISPLAY_STRING } from './runtimeHelpers';
 
 // https://template-explorer.vuejs.org/
@@ -79,21 +87,21 @@ function genNode(node: CodegenNode, context: CodegenContext) {
 	}
 }
 
-function genText(node: CodegenNode, context: CodegenContext) {
+function genText(node: TextNode, context: CodegenContext) {
 	const { push } = context;
-	push(`"${(node as any).content}"`);
+	push(`"${node.content}"`);
 }
 
-function genInterpolation(node: CodegenNode, context: CodegenContext) {
+function genInterpolation(node: InterpolationNode, context: CodegenContext) {
 	const { push, helper } = context;
 	push(`${helper(TO_DISPLAY_STRING)}(`);
-	genNode((node as any).content, context);
+	genNode(node.content, context);
 	push(')');
 }
 
-function genExpression(node: CodegenNode, context: CodegenContext) {
+function genExpression(node: ExpressionNode, context: CodegenContext) {
 	const { push } = context;
-	push(`${(node as any).content}`);
+	push(`${node.content}`);
 }
 
 // 生成 导入 const {} = Vue
