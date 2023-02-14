@@ -1,13 +1,21 @@
+import { isString } from '@vue/shared';
 import {
+	CompoundExpressionNode,
+	ElementNode,
 	ExpressionNode,
 	InterpolationNode,
 	JSChildNode,
 	NodeTypes,
 	RootNode,
+	SimpleExpressionNode,
 	TemplateChildNode,
 	TextNode
 } from './ast';
-import { helperNameMap, TO_DISPLAY_STRING } from './runtimeHelpers';
+import {
+	helperNameMap,
+	TO_DISPLAY_STRING,
+	CREATE_ELEMENT_VNODE
+} from './runtimeHelpers';
 
 // https://template-explorer.vuejs.org/
 
@@ -82,6 +90,12 @@ function genNode(node: CodegenNode, context: CodegenContext) {
 		case NodeTypes.SIMPLE_EXPRESSION:
 			genExpression(node, context);
 			break;
+		case NodeTypes.ELEMENT:
+			genElement(node, context);
+			break;
+		case NodeTypes.COMPOUND_EXPRESSION:
+			genCompound(node, context);
+			break;
 		default:
 			break;
 	}
@@ -99,7 +113,7 @@ function genInterpolation(node: InterpolationNode, context: CodegenContext) {
 	push(')');
 }
 
-function genExpression(node: ExpressionNode, context: CodegenContext) {
+function genExpression(node: SimpleExpressionNode, context: CodegenContext) {
 	const { push } = context;
 	push(`${node.content}`);
 }
@@ -110,4 +124,32 @@ function genFunctionPreamble(ast: RootNode, { push }: CodegenContext) {
 	const helpers = Array.from(ast.helpers);
 	push(`const { ${helpers.map(aliasHelper).join(', ')} } = ${bindings}`);
 	push('\n');
+}
+
+function genElement(node: ElementNode, context: CodegenContext) {
+	const { tag, children } = node;
+	const { push, helper } = context;
+	push(`${helper(CREATE_ELEMENT_VNODE)}("${tag}")`);
+	if (children.length > 0) {
+		push(`, null, `);
+		for (let i = 0; i < children.length; i++) {
+			const child = children[i];
+			genNode(child, context);
+		}
+		push(')');
+	}
+}
+
+function genCompound(node: CompoundExpressionNode, context: CodegenContext) {
+	const { children } = node;
+	const { push } = context;
+
+	for (let i = 0; i < children.length; i++) {
+		const child = children[i];
+		if (isString(child)) {
+			push(child);
+		} else {
+			genNode(child, context);
+		}
+	}
 }

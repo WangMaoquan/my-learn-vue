@@ -4,18 +4,23 @@ export const enum NodeTypes {
 	TEXT, // 文本
 	COMMENT, // 注释
 	SIMPLE_EXPRESSION, // {{ xxx }} 中的 xxx
-	INTERPOLATION // {{}}
+	INTERPOLATION, // {{}}
+	COMPOUND_EXPRESSION // text, {{}}之类
 }
 
 export interface Node {
 	type: NodeTypes;
 }
 
-export type TemplateChildNode = ElementNode | TextNode | InterpolationNode;
+export type TemplateChildNode =
+	| ElementNode
+	| TextNode
+	| InterpolationNode
+	| CompoundExpressionNode;
 
 export type JSChildNode = ExpressionNode;
 
-export type ExpressionNode = SimpleExpressionNode;
+export type ExpressionNode = SimpleExpressionNode | CompoundExpressionNode;
 
 export type ParentNode = RootNode | ElementNode;
 
@@ -47,6 +52,17 @@ export interface SimpleExpressionNode extends Node {
 	content: string;
 }
 
+export interface CompoundExpressionNode extends Node {
+	type: NodeTypes.COMPOUND_EXPRESSION;
+	children: (
+		| SimpleExpressionNode
+		| CompoundExpressionNode
+		| InterpolationNode
+		| TextNode
+		| string
+	)[];
+}
+
 /**
  * 创建 ast 的根节点
  */
@@ -55,5 +71,14 @@ export function createRoot(children: TemplateChildNode[]): RootNode {
 		type: NodeTypes.ROOT,
 		children,
 		helpers: new Set()
+	};
+}
+
+export function createCompoundExpression(
+	children: CompoundExpressionNode['children']
+): CompoundExpressionNode {
+	return {
+		type: NodeTypes.COMPOUND_EXPRESSION,
+		children
 	};
 }

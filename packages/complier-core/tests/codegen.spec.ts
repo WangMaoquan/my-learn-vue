@@ -1,4 +1,11 @@
-import { baseParse, generate, transform, transformExpression } from '../src';
+import {
+	baseParse,
+	generate,
+	transform,
+	transformExpression,
+	transformElement,
+	transformText
+} from '../src';
 
 describe('codegen', () => {
 	test('string', () => {
@@ -17,6 +24,25 @@ describe('codegen', () => {
 		});
 		const { code } = generate(ast);
 
+		expect(code).toMatchSnapshot();
+	});
+
+	test('element', () => {
+		const ast = baseParse('<div></div>');
+		transform(ast, {
+			nodeTransforms: [transformElement]
+		});
+		const { code } = generate(ast);
+
+		expect(code).toMatchSnapshot();
+	});
+
+	test('mxixin', () => {
+		const ast = baseParse(`<div>hi, {{message}}</div>`);
+		transform(ast, {
+			nodeTransforms: [transformExpression, transformElement, transformText]
+		});
+		const { code } = generate(ast);
 		expect(code).toMatchSnapshot();
 	});
 });
