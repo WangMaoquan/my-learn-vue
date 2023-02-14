@@ -3,7 +3,11 @@ import { NodeTransform } from '../transform';
 
 export const transformExpression: NodeTransform = (node) => {
 	if (node.type === NodeTypes.INTERPOLATION) {
-		node.content = processExpression(node.content);
+		return () => {
+			if (node.content.type === NodeTypes.SIMPLE_EXPRESSION) {
+				node.content = processExpression(node.content);
+			}
+		};
 	}
 };
 

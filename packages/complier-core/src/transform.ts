@@ -1,6 +1,7 @@
 import { helperNameMap, TO_DISPLAY_STRING } from './runtimeHelpers';
 import { RootNode, TemplateChildNode, ParentNode, NodeTypes } from './ast';
 import { TransformOptions } from './options';
+import { isArray } from '@vue/shared';
 
 export interface TransformContext {
 	root: RootNode;
@@ -35,10 +36,17 @@ function traverseNode(
 ) {
 	// 获取 nodeTransforms
 	const nodeTransforms = context.nodeTransforms;
-
+	const exitFns = [];
 	// 调用 自定义的plugin
 	for (let i = 0; i < nodeTransforms.length; i++) {
-		nodeTransforms[i](node, context);
+		const onExit = nodeTransforms[i](node, context);
+		if (onExit) {
+			if (isArray(onExit)) {
+				exitFns.push(...onExit);
+			} else {
+				exitFns.push(onExit);
+			}
+		}
 	}
 
 	// root element 才有children
@@ -52,6 +60,11 @@ function traverseNode(
 			break;
 		default:
 			break;
+	}
+
+	let i = exitFns.length;
+	while (i--) {
+		exitFns[i]();
 	}
 }
 
