@@ -127,11 +127,11 @@ function genFunctionPreamble(ast: RootNode, { push }: CodegenContext) {
 }
 
 function genElement(node: ElementNode, context: CodegenContext) {
-	const { tag, children } = node;
+	const { tag, children, props } = node;
 	const { push, helper } = context;
 	push(`${helper(CREATE_ELEMENT_VNODE)}("${tag}"`);
 	if (children.length > 0) {
-		push(`, null, `);
+		push(`, ${props || 'null'}, `);
 		for (let i = 0; i < children.length; i++) {
 			const child = children[i];
 			genNode(child, context);

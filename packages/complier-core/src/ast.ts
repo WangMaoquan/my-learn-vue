@@ -1,3 +1,5 @@
+import { TransformContext } from './transform';
+
 export const enum NodeTypes {
 	ROOT, // 根
 	ELEMENT, // html 元素
@@ -5,7 +7,17 @@ export const enum NodeTypes {
 	COMMENT, // 注释
 	SIMPLE_EXPRESSION, // {{ xxx }} 中的 xxx
 	INTERPOLATION, // {{}}
-	COMPOUND_EXPRESSION // text, {{}}之类
+	COMPOUND_EXPRESSION, // text, {{}}之类
+
+	// codegen
+	VNODE_CALL
+}
+
+export const enum ElementTypes {
+	ELEMENT,
+	COMPONENT,
+	SLOT,
+	TEMPLATE
 }
 
 export interface Node {
@@ -29,12 +41,6 @@ export interface RootNode extends Node {
 	type: NodeTypes.ROOT;
 	codegenNode?: TemplateChildNode;
 	helpers: Set<symbol>;
-}
-
-export interface ElementNode extends Node {
-	tag: string;
-	children: TemplateChildNode[];
-	type: NodeTypes.ELEMENT;
 }
 
 export interface TextNode extends Node {
@@ -63,6 +69,40 @@ export interface CompoundExpressionNode extends Node {
 	)[];
 }
 
+export type ElementNode = PlainElementNode;
+
+export interface BaseElementNode extends Node {
+	type: NodeTypes.ELEMENT;
+	tag: string;
+	props: Array<any>;
+	children: TemplateChildNode[];
+}
+
+export interface PlainElementNode extends BaseElementNode {
+	tagType: ElementTypes.ELEMENT;
+	codegenNode:
+		| VNodeCall
+		| SimpleExpressionNode // when hoisted
+		| undefined;
+}
+
+export type TemplateTextChildNode =
+	| TextNode
+	| InterpolationNode
+	| CompoundExpressionNode;
+export type PropsExpression = ExpressionNode;
+
+export interface VNodeCall extends Node {
+	type: NodeTypes.VNODE_CALL;
+	tag: string | symbol;
+	props: PropsExpression | undefined;
+	children:
+		| TemplateChildNode[] // multiple children
+		| TemplateTextChildNode // single text child
+		| SimpleExpressionNode // hoisted
+		| undefined;
+}
+
 /**
  * 创建 ast 的根节点
  */
@@ -79,6 +119,20 @@ export function createCompoundExpression(
 ): CompoundExpressionNode {
 	return {
 		type: NodeTypes.COMPOUND_EXPRESSION,
+		children
+	};
+}
+
+export function createVNodeCall(
+	context: TransformContext | null,
+	tag: VNodeCall['tag'],
+	props?: VNodeCall['props'],
+	children?: VNodeCall['children']
+): VNodeCall {
+	return {
+		type: NodeTypes.VNODE_CALL,
+		tag,
+		props,
 		children
 	};
 }
