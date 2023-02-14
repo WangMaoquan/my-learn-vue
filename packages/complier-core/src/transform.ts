@@ -4,6 +4,10 @@ import { TransformOptions } from './options';
 export interface TransformContext {
 	root: RootNode;
 	nodeTransforms: NodeTransform[];
+	// helper 是我们处理 对于 createElement toDisplayString 这样的需要从vue 中解构字符串的保存
+	helpers: Map<string, number>; // helper 的map
+	helper<T extends string>(name: T): T; // 存入helper 的方法
+	helperString(name: string): string; // 转换helper 的方法
 }
 
 export type NodeTransform = (
@@ -18,6 +22,9 @@ export function transform(root: RootNode, options: TransformOptions = {}) {
 	traverseNode(root, context);
 
 	createRootCodegen(root);
+
+	// init 将所有的helpers 挂载到root上
+	root.helpers = new Set([...context.helpers.keys()]);
 	return root;
 }
 
@@ -39,6 +46,9 @@ function traverseNode(
 		case NodeTypes.ELEMENT:
 			traverseChildren(node, context);
 			break;
+		case NodeTypes.INTERPOLATION: // 插值是需要 使用到toDisplayString 这个方法 所以添加进helper
+			context.helper('toDisplayString');
+			break;
 		default:
 			break;
 	}
@@ -56,10 +66,19 @@ function createTransformContext(
 	root: RootNode,
 	options: TransformOptions
 ): TransformContext {
-	return {
+	const context: TransformContext = {
 		root,
-		nodeTransforms: options.nodeTransforms || []
+		nodeTransforms: options.nodeTransforms || [],
+		helpers: new Map(),
+		helper(name) {
+			context.helpers.set(name, 1);
+			return name;
+		},
+		helperString(name) {
+			return `_${context.helper(name)}`;
+		}
 	};
+	return context;
 }
 
 function createRootCodegen(root: RootNode) {
