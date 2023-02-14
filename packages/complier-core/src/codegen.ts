@@ -89,7 +89,7 @@ function genInterpolation(node: CodegenNode, context: CodegenContext) {
 
 function genExpression(node: CodegenNode, context: CodegenContext) {
 	const { push } = context;
-	push(`_ctx.${(node as any).content}`);
+	push(`${(node as any).content}`);
 }
 
 // 生成 导入 const {} = Vue

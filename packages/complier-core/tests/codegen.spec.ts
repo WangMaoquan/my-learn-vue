@@ -1,4 +1,4 @@
-import { baseParse, generate, transform } from '../src';
+import { baseParse, generate, transform, transformExpression } from '../src';
 
 describe('codegen', () => {
 	test('string', () => {
@@ -12,7 +12,9 @@ describe('codegen', () => {
 
 	test('interpolation', () => {
 		const ast = baseParse('{{message}}');
-		transform(ast);
+		transform(ast, {
+			nodeTransforms: [transformExpression]
+		});
 		const { code } = generate(ast);
 
 		expect(code).toMatchSnapshot();
