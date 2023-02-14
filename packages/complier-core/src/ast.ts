@@ -18,6 +18,7 @@ export type ParentNode = RootNode | ElementNode;
 export interface RootNode extends Node {
 	children: TemplateChildNode[];
 	type: NodeTypes.ROOT;
+	codegenNode?: TemplateChildNode;
 }
 
 export interface ElementNode extends Node {

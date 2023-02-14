@@ -14,7 +14,8 @@ export function generate(ast: RootNode): CodegenResult {
 	const signature = args.join(', ');
 
 	code += `function ${functionName}(${signature}){`;
-	code += `return "hi"`;
+	const node = ast.codegenNode;
+	code += `return "${(node as any).content}"`; // 这一步其实我们可以放到 transform 里面去生成
 	code += `}`;
 
 	return {

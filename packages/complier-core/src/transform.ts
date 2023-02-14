@@ -11,11 +11,13 @@ export type NodeTransform = (
 	context: TransformContext
 ) => void | (() => void) | (() => void)[];
 
-export function transform(root: RootNode, options: TransformOptions) {
+export function transform(root: RootNode, options: TransformOptions = {}) {
 	// 创建 上下文对象, 保存option 中配置
 	const context = createTransformContext(root, options);
 	// 深度优先遍历
 	traverseNode(root, context);
+
+	createRootCodegen(root);
 	return root;
 }
 
@@ -58,4 +60,8 @@ function createTransformContext(
 		root,
 		nodeTransforms: options.nodeTransforms || []
 	};
+}
+
+function createRootCodegen(root: RootNode) {
+	root.codegenNode = root.children[0];
 }
