@@ -61,7 +61,6 @@ describe('parse', () => {
 
 	test('mixin interpolation & text & element', () => {
 		const ast = baseParse(`<p>hi,{{message}}</p>`);
-		console.log(ast);
 		expect(ast.children[0]).toStrictEqual({
 			type: NodeTypes.ELEMENT,
 			tag: 'p',

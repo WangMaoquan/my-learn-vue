@@ -1,4 +1,5 @@
 import { JSChildNode, NodeTypes, RootNode, TemplateChildNode } from './ast';
+import { helperNameMap, TO_DISPLAY_STRING } from './runtimeHelpers';
 
 // https://template-explorer.vuejs.org/
 
@@ -12,10 +13,11 @@ type CodegenNode = TemplateChildNode | JSChildNode;
 export interface CodegenContext {
 	code: string;
 	push(code: string): void;
+	helper(key: symbol): string;
 }
 
 // 将方法重命名
-const aliasHelper = (s: string) => `${s}: _${s}`;
+const aliasHelper = (s: symbol) => `${helperNameMap[s]}: _${helperNameMap[s]}`;
 
 export function generate(ast: RootNode): CodegenResult {
 	const context = createCodegenContext(ast);
@@ -52,6 +54,9 @@ function createCodegenContext(
 		code,
 		push(code: string) {
 			context.code += code;
+		},
+		helper(key) {
+			return `_${helperNameMap[key]}`;
 		}
 	};
 
@@ -80,9 +85,8 @@ function genText(node: CodegenNode, context: CodegenContext) {
 }
 
 function genInterpolation(node: CodegenNode, context: CodegenContext) {
-	const { push } = context;
-	push(`_toDisplayString(`);
-	console.log(node);
+	const { push, helper } = context;
+	push(`${helper(TO_DISPLAY_STRING)}(`);
 	genNode((node as any).content, context);
 	push(')');
 }

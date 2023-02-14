@@ -1,3 +1,4 @@
+import { helperNameMap, TO_DISPLAY_STRING } from './runtimeHelpers';
 import { RootNode, TemplateChildNode, ParentNode, NodeTypes } from './ast';
 import { TransformOptions } from './options';
 
@@ -5,9 +6,9 @@ export interface TransformContext {
 	root: RootNode;
 	nodeTransforms: NodeTransform[];
 	// helper 是我们处理 对于 createElement toDisplayString 这样的需要从vue 中解构字符串的保存
-	helpers: Map<string, number>; // helper 的map
-	helper<T extends string>(name: T): T; // 存入helper 的方法
-	helperString(name: string): string; // 转换helper 的方法
+	helpers: Map<symbol, number>; // helper 的map
+	helper<T extends symbol>(name: T): T; // 存入helper 的方法
+	helperString(name: symbol): string; // 转换helper 的方法
 }
 
 export type NodeTransform = (
@@ -47,7 +48,7 @@ function traverseNode(
 			traverseChildren(node, context);
 			break;
 		case NodeTypes.INTERPOLATION: // 插值是需要 使用到toDisplayString 这个方法 所以添加进helper
-			context.helper('toDisplayString');
+			context.helper(TO_DISPLAY_STRING);
 			break;
 		default:
 			break;
@@ -75,7 +76,7 @@ function createTransformContext(
 			return name;
 		},
 		helperString(name) {
-			return `_${context.helper(name)}`;
+			return `_${helperNameMap[name]}`;
 		}
 	};
 	return context;

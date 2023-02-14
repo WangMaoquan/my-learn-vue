@@ -23,7 +23,7 @@ export interface RootNode extends Node {
 	children: TemplateChildNode[];
 	type: NodeTypes.ROOT;
 	codegenNode?: TemplateChildNode;
-	helpers: Set<string>;
+	helpers: Set<symbol>;
 }
 
 export interface ElementNode extends Node {
