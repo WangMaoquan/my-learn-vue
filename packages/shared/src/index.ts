@@ -5,7 +5,7 @@ export * from './typeUtils';
 export * from './warning';
 export * from './patchFlags';
 export * from './shapeFlags';
-export { toDisplayString } from './toDisplayString';
+export * from './toDisplayString';
 
 export const NOOP = () => {};
 

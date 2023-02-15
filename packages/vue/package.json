@@ -2,7 +2,7 @@
   "name": "vue",
   "version": "1.0.0",
   "description": "wxm vue",
-  "module": "index.ts",
+  "module": "/src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -13,3 +13,4 @@ export function compileToFunction(template: string) {
 registerRuntimeCompiler(compileToFunction);
 
 export { compileToFunction as compile };
+export * from '@vue/runtime-dom';
