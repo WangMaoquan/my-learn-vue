@@ -1,8 +1,8 @@
 export * from './apiCreateApp';
-export * from './component';
+export { getCurrentInstance, registerRuntimeCompiler } from './component';
 export * from './renderer';
-export * from './vnode';
-export * from './apiDefineComponent';
-export * from './apiInject';
-export * from './apiWatch';
-export * from './h';
+export { createVNode, createElementVNode } from './vnode';
+export { defineComponent } from './apiDefineComponent';
+export { inject, provide } from './apiInject';
+export { watch, watchEffect } from './apiWatch';
+export { h } from './h';

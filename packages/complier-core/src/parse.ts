@@ -146,7 +146,7 @@ function parseTag(
 		tag,
 		type: NodeTypes.ELEMENT,
 		children: []
-	};
+	} as any;
 }
 
 function parseText(context: ParserContext): TextNode {

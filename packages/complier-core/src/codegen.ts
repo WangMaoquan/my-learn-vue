@@ -2,7 +2,6 @@ import { isString } from '@vue/shared';
 import {
 	CompoundExpressionNode,
 	ElementNode,
-	ExpressionNode,
 	InterpolationNode,
 	JSChildNode,
 	NodeTypes,
