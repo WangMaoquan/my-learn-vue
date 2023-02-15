@@ -121,13 +121,13 @@ const createReactiveObject = (
 	return proxy;
 };
 
-export type UnwrapNestRefs<T> = T extends Ref ? T : UnwrapRefSimple<T>;
+export type UnwrapNestedRefs<T> = T extends Ref ? T : UnwrapRefSimple<T>;
 
 /**
  *
  * @param target 传入的target
  */
-export function reactive<T extends object>(target: T): UnwrapNestRefs<T>;
+export function reactive<T extends object>(target: T): UnwrapNestedRefs<T>;
 export function reactive(target: object) {
 	// 如果传入的是一个readonly 的 直接返回就好
 	if (isReadonly(target)) {

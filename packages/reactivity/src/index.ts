@@ -8,7 +8,13 @@ export {
 	proxyRefs,
 	customRef,
 	triggerRef,
-	Ref
+	type Ref,
+	type ToRef,
+	type ToRefs,
+	type UnwrapRef,
+	type ShallowRef,
+	type ShallowUnwrapRef,
+	type CustomRefFactory
 } from './ref';
 export {
 	reactive,
@@ -21,13 +27,18 @@ export {
 	shallowReadonly,
 	markRaw,
 	toRaw,
-	ReactiveFlags
+	ReactiveFlags,
+	type DeepReadonly,
+	type ShallowReactive,
+	type UnwrapNestedRefs
 } from './reactive';
 export {
 	computed,
-	WritableComputedRef,
-	ComputedGetter,
-	WritableComputedOptions
+	type ComputedRef,
+	type WritableComputedRef,
+	type WritableComputedOptions,
+	type ComputedGetter,
+	type ComputedSetter
 } from './computed';
 export {
 	effect,
@@ -36,9 +47,11 @@ export {
 	track,
 	enableTracking,
 	pauseTracking,
+	resetTracking,
 	ITERATE_KEY,
 	ReactiveEffect,
-	ReactiveEffectRunner,
-	EffectScheduler
+	type ReactiveEffectRunner,
+	type ReactiveEffectOptions,
+	type EffectScheduler
 } from './effect';
 export { TrackOpTypes, TriggerOpTypes } from './operations';

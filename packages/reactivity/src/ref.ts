@@ -88,7 +88,7 @@ export function shallowRef(value?: unknown) {
 	return new RefImpl(value, true) as any;
 }
 
-type UnwrapRef<T> = T extends Ref<infer V>
+export type UnwrapRef<T> = T extends Ref<infer V>
 	? UnwrapRefSimple<V>
 	: UnwrapRefSimple<T>;
 
