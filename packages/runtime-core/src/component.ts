@@ -437,6 +437,15 @@ export function handleSetupResult(
 export function finishComponentSetup(instance: ComponentInternalInstance) {
 	const Component = instance.type as ComponentOptions;
 	// todo 处理不存在 render 的情况
+	if (complier && !Component.render) {
+		if (Component.template) {
+			Component.render = complier(Component.template);
+			if (!instance.render) {
+				instance.render = Component.render!;
+			}
+		}
+	}
+	console.log(Component, 'CC');
 
 	// ToDo 2.x options
 
@@ -450,4 +459,10 @@ export function getComponentName(
 ): string | false | undefined {
 	// todo functional component
 	return Component.name;
+}
+
+let complier: any;
+
+export function registerRuntimeCompiler(_complier: any) {
+	complier = _complier;
 }
